@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>注釈付き Dockerfile（バックエンド）</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      padding: 2rem;
+      display: flex;
+      flex-direction: row;
+      gap: 2rem;
+    }
+    pre {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      line-height: 1.6;
+      min-width: 500px;
+    }
+    .token {
+      position: relative;
+      border-bottom: 1px dotted #aaa;
+      cursor: help;
+    }
+    .info-box {
+      font-size: 0.95rem;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      line-height: 1.6;
+    }
+    .directory-info {
+      font-size: 0.85rem;
+      background: #fefefe;
+      border: 1px dashed #aaa;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .code-container {
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+  <div class="code-container">
+    <h2>バックエンド（Python）</h2>
+    <pre>
+<span class="token" title="コメント：バックエンドのビルド開始を示すコメントです"># --- 2. Build backend + bundle static files ---</span>
+<span class="token" title="コメント：Pythonの軽量イメージをベースに使用。ASで別名runtimeを指定し、後から参照可能にします。">FROM python:3.10-slim AS runtime</span>
+<span class="token" title="コメント：作業ディレクトリを /app に設定。以降の命令はこのディレクトリ基準で動作します。">WORKDIR /app</span>
+
+<span class="token" title="コメント：Python依存関係の一覧をコピー"># Python 依存関係インストール</span>
+<span class="token" title="コメント：requirements.txt（パッケージ定義ファイル）をコピー">COPY requirements.txt ./</span>
+<span class="token" title="コメント：pip install を使ってパッケージをインストール。--no-cache-dir はキャッシュを残さず軽量化。">RUN pip install --no-cache-dir -r requirements.txt</span>
+
+<span class="token" title="コメント：バックエンドのコードをコピーする"># バックエンドコードコピー</span>
+<span class="token" title="コメント：main.py（エントリーポイント）をコピー">COPY main.py .</span>
+<span class="token" title="コメント：ルーティング処理を含む routes ディレクトリをコピー">COPY routes/ ./routes/</span>
+<span class="token" title="コメント：ビジネスロジックなどを含む services ディレクトリをコピー">COPY services/ ./services/</span>
+
+<span class="token" title="コメント：ビルド済みフロント（静的ファイル）をこのイメージに取り込む"># ビルド済みフロント静的ファイルを配置</span>
+<span class="token" title="コメント：frontend-builder ステージから dist 出力をコピーし、フロントを表示可能にします">COPY --from=frontend-builder /app/frontend/dist ./frontend/dist</span>
+
+<span class="token" title="コメント：アプリの環境変数をここで設定（例：ポート番号やOAuthの設定名など）"># 環境変数（必要に応じてシークレット名など）</span>
+<span class="token" title="コメント：FastAPI等で使用する起動ポートとOAuthの秘密名を環境変数で指定">ENV PORT=8080 \</span>
+<span class="token" title="コメント：OAuth認証時に使うSecret Managerなどの名前。">    OAUTH_SECRET_NAME=youtube-oauth</span>
+
+<span class="token" title="コメント：FastAPIをuvicornで起動。ホスト0.0.0.0は外部アクセス許可、PORTは上記ENVを使用"># アプリ起動</span>
+<span class="token" title="コメント：main.pyのFastAPIアプリ(main:app)を起動">CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}</span>
+    </pre>
+  </div>
+
+  <div class="info-box">
+    <strong>バックエンド環境の解説：</strong>
+    <ol>
+      <li>バックエンドはAPIやサーバー処理の部分を担います。</li>
+      <li>Pythonはバックエンド開発に人気の言語です。</li>
+      <li>必要なパッケージは <code>requirements.txt</code> に書き、<code>pip install</code> で一括インストールします。</li>
+      <li><code>main.py</code> がエントリーポイント。ルート処理は <code>routes/</code>、ビジネス処理は <code>services/</code> に分けて管理。</li>
+      <li>ビルド済みのフロントを一緒に含めることで、バックエンドだけで配信可能になります。</li>
+      <li><code>uvicorn</code> はPythonで非同期Webサーバーを立てるための軽量サーバーです。</li>
+    </ol>
+   
+    <div class="directory-info">
+      📁 /app/<br>
+      ├─ main.py （FastAPIアプリ起動ポイント）<br>
+      ├─ requirements.txt（依存一覧）<br>
+      ├─ routes/ （ルーティング：APIのURL処理）<br>
+      ├─ services/ （処理ロジック）<br>
+      └─ frontend/dist/ （静的ファイル＝フロントビルド成果物）
+    </div>
+  </div>
+</body>
+</html>
