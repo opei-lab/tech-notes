@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>注釈付き Dockerfile</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      padding: 2rem;
+    }
+    pre {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    .token {
+      position: relative;
+      border-bottom: 1px dotted #aaa;
+      cursor: help;
+    }
+  </style>
+</head>
+<body>
+  <h2>注釈付き Dockerfile</h2>
+  <pre>
+<span class="token" title="コメント：このセクションはフロントエンドのビルド処理を開始することを示す説明コメントです"># --- 1. Build frontend ---</span>
+<span class="token" title="node:20-alpine イメージをベースに新しいビルドステージを定義します。node:20 は Node.js v20 を含み、alpine は軽量Linuxです。ASで 'frontend-builder' という名前を付けることで、後のステージで 'COPY --from=frontend-builder' として成果物を再利用可能になります。これは複数ステージでの構成やサイズ削減で非常に便利な慣習です。">FROM node:20-alpine AS frontend-builder</span>
+<span class="token" title="作業ディレクトリを /app/frontend に設定します。この後の命令（COPYやRUNなど）はこのパスを基準に動作します。">WORKDIR /app/frontend</span>
+
+<span class="token" title="コメント：依存関係インストール用のステップを明示しています。"># 依存関係インストール</span>
+<span class="token" title="ホストの frontend ディレクトリから package.json および package-lock.json（ワイルドカード指定）をカレントディレクトリにコピーします。これはキャッシュを有効に保ち、再ビルド時の効率を向上させます。">COPY frontend/package*.json ./</span>
+<span class="token" title="npm ci は package-lock.json に従ってクリーンに依存関係をインストールします。通常の 'npm install' よりも再現性が高く、CI/CDやDockerビルドでは推奨されます。">RUN npm ci</span>
+
+<span class="token" title="コメント：依存解決後に全体ソースをコピーし、本番ビルドを行う処理です。"># ソースコピー＆ビルド</span>
+<span class="token" title="frontend ディレクトリのすべてのソースコード（HTML, JS, CSS等）を作業ディレクトリにコピーします。">COPY frontend/ ./</span>
+<span class="token" title="npm run build により、React/Vue/Next.jsなどのフロントエンドアプリが静的ファイルにビルドされます。通常 build/ ディレクトリに出力され、後のステージで使用されます。">RUN npm run build</span>
+  </pre>
+</body>
+</html>
