@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker完全ガイド</title>
+    <style>
+        :root {
+            --docker-blue: #0db7ed;
+            --docker-dark: #384d54;
+            --compose-purple: #5f4b8b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--docker-blue) 0%, var(--docker-dark) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .tabs-container {
+            position: relative;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--docker-blue);
+            z-index: 10;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .tab-nav-button:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: var(--shadow-md);
+        }
+
+        .tab-nav-left {
+            left: 10px;
+        }
+
+        .tab-nav-right {
+            right: 10px;
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            color: var(--docker-blue);
+        }
+
+        .tab-button.active {
+            color: var(--docker-blue);
+            border-bottom-color: var(--docker-blue);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .concept-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .concept-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--docker-dark);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .concept-card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--docker-blue);
+        }
+
+        .concept-card h3 {
+            color: var(--docker-dark);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .comparison-table th {
+            background: var(--docker-blue);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid var(--info);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .info-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .warning-title {
+            font-weight: 600;
+            color: #b45309;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-box {
+            background: #d1fae5;
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .success-title {
+            font-weight: 600;
+            color: #065f46;
+            margin-bottom: 0.5rem;
+        }
+
+        .architecture-diagram {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .code-title {
+            background: var(--docker-dark);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: 0;
+        }
+
+        .workflow-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .workflow-card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .workflow-card h3 {
+            color: var(--docker-dark);
+            margin-bottom: 1rem;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            background: var(--docker-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-command {
+            font-family: monospace;
+            background: var(--docker-dark);
+            color: #e2e8f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .step-desc {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .concept-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-table {
+                font-size: 0.875rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🐳 Docker包括的ガイド</h1>
+            <p class="subtitle">概念・基礎から実践・運用まで - コンテナ技術の完全マスター</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs-container">
+            <button class="tab-nav-button tab-nav-left" onclick="scrollTabs(-1)">‹</button>
+            <div class="tabs" id="tabsContainer">
+                <button class="tab-button active" onclick="switchTab('concepts')">概念・基礎</button>
+                <button class="tab-button" onclick="switchTab('dockerfile')">Dockerfile</button>
+                <button class="tab-button" onclick="switchTab('compose')">Docker Compose</button>
+                <button class="tab-button" onclick="switchTab('commands')">コマンドリファレンス</button>
+                <button class="tab-button" onclick="switchTab('complete-commands')">全コマンド網羅</button>
+                <button class="tab-button" onclick="switchTab('complete-keys')">全キー・命令網羅</button>
+                <button class="tab-button" onclick="switchTab('workflows')">実践ワークフロー</button>
+            </div>
+            <button class="tab-nav-button tab-nav-right" onclick="scrollTabs(1)">›</button>
+        </div>
+
+        <!-- 概念・基礎タブ -->
+        <div id="concepts" class="tab-content active">
+            <div class="concept-section">
+                <h2 class="concept-title">🐳 Dockerとは何か</h2>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>💡 環境構築の歴史的課題</h3>
+                        <p><strong>「動く環境を作る」</strong>のは昔から開発者の大きな課題でした。</p>
+                        <div class="warning-box">
+                            <div class="warning-title">⚠️ 従来の問題</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>環境差異</strong>: 「俺の環境では動くけど...」</li>
+                                <li><strong>設定共有困難</strong>: 手順書だけでは再現できない</li>
+                                <li><strong>依存地獄</strong>: ライブラリやバージョンの複雑な依存関係</li>
+                                <li><strong>環境構築時間</strong>: 新メンバーが参加するたび数日かかる</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>🏗️ 仮想化技術の進化</h3>
+                        <p><strong>Docker</strong>は<strong>コンテナ型仮想化技術</strong>の代表格です。</p>
+                        <div class="info-box">
+                            <div class="info-title">💡 仮想化の種類</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>VM型（仮想マシン）</strong>: 完全なOSを仮想化</li>
+                                <li><strong>コンテナ型</strong>: OS上でプロセスを隔離</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🚀 Dockerの革新性と先見性</h3>
+                        <div class="success-box">
+                            <div class="success-title">✅ VM型では不可能だった「環境設定の完全共有」を実現</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>軽量</strong>: OSの用意が不要</li>
+                                <li><strong>高速</strong>: 秒単位での起動</li>
+                                <li><strong>ポータブル</strong>: どこでも同じように動作</li>
+                                <li><strong>効率的</strong>: リソース消費が少ない</li>
+                                <li><strong>🎯 革命的共有性</strong>: <span style="color: #059669; font-weight: bold;">環境設定をコードとして完全管理・共有</span></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="info-box">
+                            <div class="info-title">🌟 Java・AWS的な先見性</div>
+                            <p>Dockerは<strong>Java</strong>や<strong>Amazon AWS</strong>と同様の成功パターンを踏襲：</p>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>先見性</strong>: 未来の課題を早期に察知・解決</li>
+                                <li><strong>エコシステム充実</strong>: 周辺ツール・サービスの急速な発展</li>
+                                <li><strong>業界標準化</strong>: デファクトスタンダードとして定着</li>
+                                <li><strong>継続的進化</strong>: ユーザーニーズに応じた機能拡張</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>項目</th>
+                            <th>仮想マシン（VM型）</th>
+                            <th>Docker（コンテナ型）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>環境設定共有</strong></td>
+                            <td><span style="color: #ef4444;">❌ 困難</span><br>手順書による個別構築</td>
+                            <td><span style="color: #10b981;">✅ 容易</span><br>Dockerfile/Composeで完全再現</td>
+                        </tr>
+                        <tr>
+                            <td><strong>OS</strong></td>
+                            <td>各VMに完全なOSが必要</td>
+                            <td>ホストOSを共有（OSレイヤー不要）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>起動時間</strong></td>
+                            <td>数分（OS起動含む）</td>
+                            <td>数秒（プロセス起動のみ）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>リソース消費</strong></td>
+                            <td>大（OS分も含む）</td>
+                            <td>小（アプリケーションのみ）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>チーム協業</strong></td>
+                            <td><span style="color: #ef4444;">困難</span><br>「俺の環境では動く」問題</td>
+                            <td><span style="color: #10b981;">容易</span><br>完全に同一環境を共有</td>
+                        </tr>
+                        <tr>
+                            <td><strong>デプロイ</strong></td>
+                            <td>環境毎に個別設定必要</td>
+                            <td>どこでも同じイメージで動作</td>
+                        </tr>
+                        <tr>
+                            <td><strong>用途</strong></td>
+                            <td>完全に異なるOS環境が必要</td>
+                            <td>アプリケーション環境の標準化</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="concept-grid" style="margin-top: 2rem;">
+                    <div class="concept-card">
+                        <h3>💼 実際の開発現場での違い</h3>
+                        
+                        <div class="warning-box">
+                            <div class="warning-title">❌ VM型での典型的な問題</div>
+                            <div style="margin-top: 1rem;">
+                                <h4 style="color: #b91c1c; margin-bottom: 0.5rem;">新人エンジニア参加時</h4>
+                                <ul style="margin-bottom: 1rem;">
+                                    <li>手順書を見ながら3日かけて環境構築</li>
+                                    <li>途中でエラーが発生、先輩エンジニアに質問攻め</li>
+                                    <li>「なぜか俺の環境だけ動かない...」</li>
+                                </ul>
+                                
+                                <h4 style="color: #b91c1c; margin-bottom: 0.5rem;">本番デプロイ時</h4>
+                                <ul>
+                                    <li>開発環境と本番環境の微妙な差異でトラブル</li>
+                                    <li>「ローカルでは動いたのに...」</li>
+                                    <li>緊急対応で夜中まで環境調査</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="success-box">
+                            <div class="success-title">✅ Docker導入後の現実</div>
+                            <div style="margin-top: 1rem;">
+                                <h4 style="color: #059669; margin-bottom: 0.5rem;">新人エンジニア参加時</h4>
+                                <ul style="margin-bottom: 1rem;">
+                                    <li><code>git clone</code> → <code>docker-compose up</code> → 完了（5分）</li>
+                                    <li>全員が完全に同じ環境で開発開始</li>
+                                    <li>「環境構築で躓く」ストレスが消失</li>
+                                </ul>
+                                
+                                <h4 style="color: #059669; margin-bottom: 0.5rem;">本番デプロイ時</h4>
+                                <ul>
+                                    <li>開発で動いたイメージが本番でもそのまま動作</li>
+                                    <li>環境差異によるトラブルが激減</li>
+                                    <li>デプロイの心理的ハードルが大幅に低下</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🌍 Dockerの普及</h3>
+                        <p><strong>Linux環境</strong>で生まれ、完全にデファクトスタンダードに。</p>
+                        <div class="info-box">
+                            <div class="info-title">📈 Windows対応の歴史</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>初期</strong>: Linux専用で普及が遅かった</li>
+                                <li><strong>Docker Desktop登場</strong>: WSLが自動導入される</li>
+                                <li><strong>現在</strong>: UIとお手軽感で完全に普及</li>
+                                <li><strong>安定性</strong>: 挙動も安定し業界標準</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>⚠️ 制約事項</h3>
+                        <div class="warning-box">
+                            <div class="warning-title">🚫 使用できないケース</div>
+                            <p><strong>OS以下のレイヤーに依存するシステム</strong>は使用不可</p>
+                            <ul style="margin-top: 0.5rem;">
+                                <li>カーネルモジュールが必要</li>
+                                <li>特定のハードウェア直接アクセス</li>
+                                <li>OS固有のシステムコール依存</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="concept-section">
+                <h2 class="concept-title">🏗️ Dockerアーキテクチャ</h2>
+                
+                <div class="architecture-diagram">
+                    <svg width="100%" height="400" viewBox="0 0 800 400">
+                        <!-- ホストOS -->
+                        <rect x="50" y="320" width="700" height="60" fill="#e5e7eb" stroke="#6b7280" stroke-width="2" rx="8"/>
+                        <text x="400" y="355" text-anchor="middle" font-size="16" font-weight="bold" fill="#374151">ホストOS（Linux/Windows/macOS）</text>
+                        
+                        <!-- Docker Engine -->
+                        <rect x="50" y="240" width="700" height="60" fill="#0db7ed" stroke="#0a94c2" stroke-width="2" rx="8"/>
+                        <text x="400" y="275" text-anchor="middle" font-size="16" font-weight="bold" fill="white">Docker Engine</text>
+                        
+                        <!-- コンテナ群 -->
+                        <rect x="75" y="80" width="150" height="140" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" rx="8"/>
+                        <text x="150" y="105" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e40af">Web App</text>
+                        <rect x="85" y="120" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="150" y="140" text-anchor="middle" font-size="12" fill="#374151">Node.js</text>
+                        <rect x="85" y="160" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="150" y="180" text-anchor="middle" font-size="12" fill="#374151">Express</text>
+                        
+                        <rect x="245" y="80" width="150" height="140" fill="#dcfce7" stroke="#10b981" stroke-width="2" rx="8"/>
+                        <text x="320" y="105" text-anchor="middle" font-size="14" font-weight="bold" fill="#065f46">Database</text>
+                        <rect x="255" y="120" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="320" y="140" text-anchor="middle" font-size="12" fill="#374151">PostgreSQL</text>
+                        <rect x="255" y="160" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="320" y="180" text-anchor="middle" font-size="12" fill="#374151">データ</text>
+                        
+                        <rect x="415" y="80" width="150" height="140" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="8"/>
+                        <text x="490" y="105" text-anchor="middle" font-size="14" font-weight="bold" fill="#b45309">Cache</text>
+                        <rect x="425" y="120" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="490" y="140" text-anchor="middle" font-size="12" fill="#374151">Redis</text>
+                        <rect x="425" y="160" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="490" y="180" text-anchor="middle" font-size="12" fill="#374151">メモリ</text>
+                        
+                        <rect x="585" y="80" width="150" height="140" fill="#fce7f3" stroke="#ec4899" stroke-width="2" rx="8"/>
+                        <text x="660" y="105" text-anchor="middle" font-size="14" font-weight="bold" fill="#be185d">Proxy</text>
+                        <rect x="595" y="120" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="660" y="140" text-anchor="middle" font-size="12" fill="#374151">Nginx</text>
+                        <rect x="595" y="160" width="130" height="30" fill="#f3f4f6" stroke="#9ca3af" rx="4"/>
+                        <text x="660" y="180" text-anchor="middle" font-size="12" fill="#374151">設定</text>
+                        
+                        <!-- タイトル -->
+                        <text x="400" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#374151">Dockerコンテナアーキテクチャ</text>
+                        <text x="400" y="50" text-anchor="middle" font-size="14" fill="#6b7280">各コンテナは独立して動作し、必要に応じて連携</text>
+                    </svg>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🎯 主要概念</h3>
+                        <ul style="margin-top: 0.5rem;">
+                            <li><strong>イメージ</strong>: アプリの設計図</li>
+                            <li><strong>コンテナ</strong>: イメージから作られる実行環境</li>
+                            <li><strong>Dockerfile</strong>: イメージの作成手順書</li>
+                            <li><strong>Docker Compose</strong>: 複数コンテナの管理</li>
+                        </ul>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>🔄 ライフサイクル</h3>
+                        <div style="margin-top: 1rem;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; margin-right: 1rem;">1</span>
+                                <span>Dockerfileからイメージをビルド</span>
+                            </div>
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; margin-right: 1rem;">2</span>
+                                <span>イメージからコンテナを起動</span>
+                            </div>
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; margin-right: 1rem;">3</span>
+                                <span>コンテナでアプリケーション実行</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; margin-right: 1rem;">4</span>
+                                <span>不要になったら停止・削除</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dockerfileタブ -->
+        <div id="dockerfile" class="tab-content">
+            <div class="concept-section">
+                <h2 class="concept-title">📄 Dockerfileとは</h2>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🏗️ Dockerfileの役割</h3>
+                        <p><strong>Dockerfile</strong>は、Dockerイメージの作成手順を記述したテキストファイルです。</p>
+                        <div class="info-box">
+                            <div class="info-title">💡 重要性</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>再現性</strong>: 同じ環境を何度でも作成可能</li>
+                                <li><strong>バージョン管理</strong>: Gitで履歴管理できる</li>
+                                <li><strong>自動化</strong>: CI/CDパイプラインで利用</li>
+                                <li><strong>共有</strong>: チーム間での環境統一</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>📋 基本構造</h3>
+                        <div class="code-block">
+# ベースイメージを指定
+FROM node:18-alpine
+
+# 作業ディレクトリを設定
+WORKDIR /usr/src/app
+
+# 依存関係をコピーしてインストール
+COPY package*.json ./
+RUN npm ci --only=production
+
+# アプリケーションをコピー
+COPY . .
+
+# ポートを公開
+EXPOSE 3000
+
+# 起動コマンドを指定
+CMD ["node", "server.js"]</div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">🔧 主要なDockerfile命令</h2>
+                    
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>命令</th>
+                                <th>説明</th>
+                                <th>使用例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>FROM</strong></td>
+                                <td>ベースイメージを指定</td>
+                                <td><code>FROM node:18-alpine</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>WORKDIR</strong></td>
+                                <td>作業ディレクトリを設定</td>
+                                <td><code>WORKDIR /usr/src/app</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>COPY</strong></td>
+                                <td>ホストからコンテナにファイルをコピー</td>
+                                <td><code>COPY . ./</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ADD</strong></td>
+                                <td>COPY + 自動展開・URL取得</td>
+                                <td><code>ADD archive.tar.gz /</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>RUN</strong></td>
+                                <td>ビルド時にコマンドを実行</td>
+                                <td><code>RUN npm install</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>CMD</strong></td>
+                                <td>デフォルトの実行コマンド</td>
+                                <td><code>CMD ["npm", "start"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ENTRYPOINT</strong></td>
+                                <td>常に実行されるコマンド</td>
+                                <td><code>ENTRYPOINT ["node"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>EXPOSE</strong></td>
+                                <td>使用するポートを文書化</td>
+                                <td><code>EXPOSE 3000</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ENV</strong></td>
+                                <td>環境変数を設定</td>
+                                <td><code>ENV NODE_ENV=production</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ARG</strong></td>
+                                <td>ビルド時の引数</td>
+                                <td><code>ARG VERSION=latest</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>VOLUME</strong></td>
+                                <td>マウントポイントを作成</td>
+                                <td><code>VOLUME ["/data"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>USER</strong></td>
+                                <td>実行ユーザーを指定</td>
+                                <td><code>USER 1000:1000</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🚀 マルチステージビルドの例</h3>
+                        <div class="code-title">Dockerfile（Node.js アプリケーション）</div>
+                        <div class="code-block"># ビルドステージ
+FROM node:18 AS builder
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# 本番ステージ
+FROM node:18-alpine AS production
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+COPY --from=builder /usr/src/app/dist ./dist
+USER 1000:1000
+EXPOSE 3000
+CMD ["node", "dist/server.js"]</div>
+                        
+                        <div class="success-box">
+                            <div class="success-title">✅ マルチステージの利点</div>
+                            <ul>
+                                <li><strong>小さなイメージ</strong>: 最終イメージには必要最小限のファイルのみ</li>
+                                <li><strong>セキュリティ</strong>: ビルドツールが本番環境に含まれない</li>
+                                <li><strong>効率性</strong>: ビルド成果物のみを本番に含める</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>⚡ ベストプラクティス</h3>
+                        <div class="info-box">
+                            <div class="info-title">🎯 効率的なDockerfile</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>.dockerignore使用</strong>: 不要ファイルを除外</li>
+                                <li><strong>レイヤー最適化</strong>: 変更頻度順にCOPY</li>
+                                <li><strong>キャッシュ活用</strong>: package.jsonを先にCOPY</li>
+                                <li><strong>軽量ベース</strong>: alpine版を選択</li>
+                                <li><strong>セキュリティ</strong>: 非rootユーザーで実行</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="warning-box">
+                            <div class="warning-title">⚠️ 避けるべきパターン</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li>不要なパッケージのインストール</li>
+                                <li>機密情報のハードコード</li>
+                                <li>rootユーザーでの実行</li>
+                                <li>:latestタグの使用（本番環境）</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <h3>📦 .dockerignoreファイル</h3>
+                    <div class="code-title">.dockerignore</div>
+                    <div class="code-block"># 依存関係
+node_modules/
+npm-debug.log*
+
+# Git関連
+.git/
+.gitignore
+
+# 開発ファイル
+*.md
+.env.local
+.env.development
+
+# ビルド成果物
+dist/
+build/
+
+# IDE設定
+.vscode/
+.idea/
+
+# OS固有
+.DS_Store
+Thumbs.db</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Docker Composeタブ -->
+        <div id="compose" class="tab-content">
+            <div class="concept-section">
+                <h2 class="concept-title">🐙 Docker Composeとは</h2>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🚀 Dockerの簡略化・汎用化ツール</h3>
+                        <p><strong>Docker Compose</strong>は、Dockerfileだけでも環境再現できるところを<strong>より短いコード</strong>で<strong>より簡単に</strong>構築できるようにするツールです。</p>
+                        <div class="info-box">
+                            <div class="info-title">💡 本質的な価値</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>簡略化</strong>: 長いdockerコマンドをYAMLで短縮</li>
+                                <li><strong>汎用性</strong>: 柔軟な環境定義が可能</li>
+                                <li><strong>効率化</strong>: 一つのコマンドで環境構築完了</li>
+                                <li><strong>設定管理</strong>: 複雑な設定もYAMLで直感的に</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="info-box" style="margin-top: 1rem;">
+                            <div class="info-title">🎼 お家芸：複数コンテナの統合管理</div>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>複数サービス連携</strong>: Web+DB+Cache+Proxyの組み合わせ</li>
+                                <li><strong>起動順序制御</strong>: depends_onで依存関係を管理</li>
+                                <li><strong>ネットワーク自動構築</strong>: サービス間通信を自動設定</li>
+                                <li><strong>一括操作</strong>: 全サービスを一度に起動・停止</li>
+                                <li><strong>環境別設定</strong>: 開発・テスト・本番で異なる構成</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>⚡ Dockerfileとの関係性</h3>
+                        <div class="warning-box">
+                            <div class="warning-title">🔥 Dockerfileだけでも環境は作れるが...</div>
+                            <div class="code-block" style="margin-top: 0.5rem; font-size: 0.875rem;"># 長い！複雑！
+docker network create myapp-network
+docker volume create db-data
+docker run -d --name db --network myapp-network \
+  -v db-data:/var/lib/postgresql/data \
+  -e POSTGRES_DB=myapp postgres:15
+docker build -t myapp ./
+docker run -d --name web --network myapp-network \
+  -p 3000:3000 -e DATABASE_URL=postgres://db:5432/myapp \
+  --depends-on db myapp</div>
+                        </div>
+                        
+                        <div class="success-box">
+                            <div class="success-title">✅ Docker Composeなら...</div>
+                            <div class="code-block" style="margin-top: 0.5rem; font-size: 0.875rem;"># たった1行！
+docker-compose up
+
+# しかもymlに全設定が集約
+services:
+  web:
+    build: .
+    ports: ["3000:3000"]
+    depends_on: [db]
+  db:
+    image: postgres:15</div>
+                        </div>
+                        
+                        <div class="success-box">
+                            <div class="success-title">✅ 典型的なマルチコンテナ構成</div>
+                            <div class="code-block" style="margin-top: 0.5rem; font-size: 0.875rem;">services:
+  frontend:    # React/Vue等のSPA
+    build: ./frontend
+    ports: ["3000:3000"]
+    depends_on: [backend]
+    
+  backend:     # API server
+    build: ./backend  
+    ports: ["8000:8000"]
+    depends_on: [db, redis]
+    
+  db:          # データベース
+    image: postgres:15
+    environment:
+      POSTGRES_DB: myapp
+      
+  redis:       # キャッシュ
+    image: redis:alpine
+    
+  nginx:       # リバースプロキシ
+    image: nginx:alpine
+    ports: ["80:80"]
+    depends_on: [frontend, backend]</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">📋 Docker Compose YAML完全リファレンス</h2>
+
+                    <div class="concept-card">
+                        <h3>🏗️ 基本構造</h3>
+                        <div class="code-title">docker-compose.yml</div>
+                        <div class="code-block">version: '3.9'
+
+services:        # 必須: アプリケーションサービス定義
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+  
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: myapp
+
+networks:        # オプション: カスタムネットワーク
+  frontend:
+  backend:
+
+volumes:         # オプション: 名前付きボリューム
+  db-data:
+
+secrets:         # オプション: 機密情報
+  db-password:
+    file: ./secrets/db_pass.txt</div>
+                    </div>
+
+                    <table class="comparison-table" style="margin-top: 1.5rem;">
+                        <thead>
+                            <tr>
+                                <th>キー</th>
+                                <th>重要度</th>
+                                <th>説明</th>
+                                <th>使用例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>image</strong></td>
+                                <td><span style="color: #ef4444;">★★★★★</span></td>
+                                <td>使用するDockerイメージ</td>
+                                <td><code>image: nginx:alpine</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>build</strong></td>
+                                <td><span style="color: #ef4444;">★★★★★</span></td>
+                                <td>Dockerfileからイメージをビルド</td>
+                                <td><code>build: ./app</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ports</strong></td>
+                                <td><span style="color: #ef4444;">★★★★★</span></td>
+                                <td>ポートマッピング</td>
+                                <td><code>ports: ["3000:3000"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>environment</strong></td>
+                                <td><span style="color: #ef4444;">★★★★★</span></td>
+                                <td>環境変数</td>
+                                <td><code>environment:<br>&nbsp;&nbsp;NODE_ENV: production</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>volumes</strong></td>
+                                <td><span style="color: #ef4444;">★★★★★</span></td>
+                                <td>ボリュームマウント</td>
+                                <td><code>volumes: ["./data:/app/data"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>depends_on</strong></td>
+                                <td><span style="color: #f59e0b;">★★★★</span></td>
+                                <td>サービス依存関係</td>
+                                <td><code>depends_on: ["db"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>networks</strong></td>
+                                <td><span style="color: #f59e0b;">★★★★</span></td>
+                                <td>ネットワーク接続</td>
+                                <td><code>networks: ["frontend"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>restart</strong></td>
+                                <td><span style="color: #f59e0b;">★★★★</span></td>
+                                <td>再起動ポリシー</td>
+                                <td><code>restart: unless-stopped</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>healthcheck</strong></td>
+                                <td><span style="color: #10b981;">★★★</span></td>
+                                <td>ヘルスチェック設定</td>
+                                <td><code>healthcheck:<br>&nbsp;&nbsp;test: ["CMD", "curl", "-f", "http://localhost"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>command</strong></td>
+                                <td><span style="color: #10b981;">★★★</span></td>
+                                <td>デフォルトコマンドの上書き</td>
+                                <td><code>command: ["npm", "run", "dev"]</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="concept-card" style="margin-top: 1.5rem;">
+                        <h3>🔥 完全なCompose設定例</h3>
+                        <div class="code-title">docker-compose.yml（本格的なWebアプリケーション）</div>
+                        <div class="code-block">version: '3.9'
+
+services:
+  # Web Application
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+      args:
+        NODE_ENV: production
+    image: myapp:latest
+    container_name: web-app
+    ports:
+      - "8080:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://user:${DB_PASSWORD}@db:5432/myapp
+      REDIS_URL: redis://redis:6379
+    env_file:
+      - .env
+      - .env.production
+    volumes:
+      - ./app:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+      - uploads:/usr/src/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Database
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./backups:/backups
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d myapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"  # 開発用（本番では削除）
+
+  # Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - static-files:/usr/share/nginx/html
+    depends_on:
+      - web
+    networks:
+      - frontend
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# ネットワーク定義
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true  # 外部からアクセス不可
+
+# ボリューム定義
+volumes:
+  db-data:
+    driver: local
+  redis-data:
+    driver: local
+  node_modules:
+    driver: local
+  uploads:
+    driver: local
+  static-files:
+    driver: local
+
+# 機密情報（Docker Swarm用）
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- コマンドリファレンスタブ -->
+        <div id="commands" class="tab-content">
+            <div class="concept-section">
+                <h2 class="concept-title">💻 Docker & Docker Compose コマンド完全リファレンス</h2>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🐳 必須Dockerコマンド</h3>
+                        
+                        <h4 style="color: var(--docker-dark); margin: 1rem 0 0.5rem 0;">コンテナ管理</h4>
+                        <div class="code-block">
+# コンテナの作成・実行
+docker run [OPTIONS] IMAGE [COMMAND]
+docker run -d -p 8080:80 --name web nginx
+
+# ライフサイクル管理
+docker start CONTAINER    # コンテナ開始
+docker stop CONTAINER     # コンテナ停止
+docker restart CONTAINER  # コンテナ再起動
+docker rm CONTAINER       # コンテナ削除
+
+# 状態確認
+docker ps                 # 実行中コンテナ一覧
+docker ps -a              # 全コンテナ一覧
+docker logs CONTAINER     # ログ表示
+docker exec -it CONTAINER bash  # コンテナ内実行</div>
+
+                        <h4 style="color: var(--docker-dark); margin: 1rem 0 0.5rem 0;">イメージ管理</h4>
+                        <div class="code-block">
+# イメージ操作
+docker images              # イメージ一覧
+docker pull IMAGE          # イメージダウンロード
+docker build -t TAG .     # イメージビルド
+docker push IMAGE          # イメージアップロード
+docker rmi IMAGE           # イメージ削除
+docker tag SOURCE TARGET  # イメージタグ付け</div>
+
+                        <h4 style="color: var(--docker-dark); margin: 1rem 0 0.5rem 0;">システム管理</h4>
+                        <div class="code-block">
+# システム情報・クリーンアップ
+docker system df          # ディスク使用量確認
+docker system prune       # 未使用リソース削除
+docker stats              # リソース使用量監視
+docker inspect OBJECT     # 詳細情報表示
+docker version            # バージョン情報
+docker info               # システム情報</div>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>🐙 必須Docker Composeコマンド</h3>
+                        
+                        <h4 style="color: var(--compose-purple); margin: 1rem 0 0.5rem 0;">サービス管理</h4>
+                        <div class="code-block">
+# サービスライフサイクル
+docker-compose up -d       # サービス開始（バックグラウンド）
+docker-compose down        # サービス停止・削除
+docker-compose restart     # サービス再起動
+docker-compose stop        # サービス停止（コンテナ保持）
+docker-compose start       # 停止中サービス開始
+
+# 開発ワークフロー
+docker-compose up --build  # ビルドして開始
+docker-compose build       # イメージビルドのみ
+docker-compose pull        # イメージ更新</div>
+
+                        <h4 style="color: var(--compose-purple); margin: 1rem 0 0.5rem 0;">監視・デバッグ</h4>
+                        <div class="code-block">
+# 状態確認
+docker-compose ps          # サービス状態確認
+docker-compose logs -f     # ログ監視
+docker-compose config      # 設定ファイル検証
+docker-compose top         # プロセス確認
+
+# サービス内実行
+docker-compose exec SERVICE bash    # サービス内コマンド実行
+docker-compose run SERVICE COMMAND  # 新コンテナでコマンド実行</div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">📋 コマンドオプション詳細</h2>
+                    
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>コマンド</th>
+                                <th>主要オプション</th>
+                                <th>説明</th>
+                                <th>使用例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>docker run</strong></td>
+                                <td>-d, -p, --name, -v, -e</td>
+                                <td>コンテナ作成・実行</td>
+                                <td><code>docker run -d -p 3000:3000 --name app -e NODE_ENV=prod myapp</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>docker build</strong></td>
+                                <td>-t, -f, --no-cache</td>
+                                <td>イメージビルド</td>
+                                <td><code>docker build -t myapp:v1.0 -f Dockerfile.prod .</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>docker logs</strong></td>
+                                <td>-f, --tail, --since</td>
+                                <td>ログ表示</td>
+                                <td><code>docker logs -f --tail 100 --since 1h container</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>docker exec</strong></td>
+                                <td>-it, -u, -w</td>
+                                <td>コンテナ内実行</td>
+                                <td><code>docker exec -it -u root container bash</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>compose up</strong></td>
+                                <td>-d, --build, --scale</td>
+                                <td>サービス開始</td>
+                                <td><code>docker-compose up -d --build --scale web=3</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>compose logs</strong></td>
+                                <td>-f, --tail, SERVICE</td>
+                                <td>サービスログ</td>
+                                <td><code>docker-compose logs -f --tail 50 web</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🚀 高度なコマンド例</h3>
+                        
+                        <h4 style="color: var(--docker-dark); margin: 1rem 0 0.5rem 0;">ネットワーク管理</h4>
+                        <div class="code-block">
+# ネットワーク操作
+docker network ls                    # ネットワーク一覧
+docker network create mynet         # ネットワーク作成
+docker network connect mynet container  # コンテナ接続
+docker network inspect mynet        # ネットワーク詳細</div>
+
+                        <h4 style="color: var(--docker-dark); margin: 1rem 0 0.5rem 0;">ボリューム管理</h4>
+                        <div class="code-block">
+# ボリューム操作
+docker volume ls                     # ボリューム一覧
+docker volume create myvolume       # ボリューム作成
+docker volume inspect myvolume      # ボリューム詳細
+docker volume prune                 # 未使用ボリューム削除</div>
+
+                        <h4 style="color: var(--docker-dark); margin: 1rem 0 0.5rem 0;">イメージ作業</h4>
+                        <div class="code-block">
+# イメージ詳細作業
+docker history IMAGE                # イメージ履歴表示
+docker save IMAGE > image.tar       # イメージエクスポート
+docker load < image.tar             # イメージインポート
+docker commit CONTAINER IMAGE       # コンテナからイメージ作成</div>
+                    </div>
+
+                    <div class="concept-card">
+                        <h3>🔧 トラブルシューティングコマンド</h3>
+                        
+                        <div class="warning-box">
+                            <div class="warning-title">⚠️ 問題調査</div>
+                            <div class="code-block">
+# コンテナ問題調査
+docker inspect CONTAINER           # 詳細情報
+docker diff CONTAINER              # ファイル変更確認
+docker cp CONTAINER:PATH HOST:PATH # ファイルコピー
+
+# リソース確認
+docker stats --no-stream           # 一回だけ統計表示
+docker system events               # システムイベント監視</div>
+                        </div>
+
+                        <div class="info-box">
+                            <div class="info-title">💡 デバッグテクニック</div>
+                            <div class="code-block">
+# デバッグ用コンテナ起動
+docker run -it --rm alpine sh      # 軽量シェル環境
+
+# ネットワーク接続テスト
+docker run --rm -it --network NETWORK alpine ping HOST
+
+# ボリューム内容確認
+docker run --rm -v VOLUME:/data alpine ls -la /data</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 実践ワークフロータブ -->
+        <div id="workflows" class="tab-content">
+            <div class="workflow-section">
+                <h2 class="concept-title">🚀 実践的Dockerワークフロー</h2>
+                
+                <div class="workflow-grid">
+                    <div class="workflow-card">
+                        <h3>🏗️ 開発環境セットアップ</h3>
+                        <div class="workflow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-command">git clone [repo] && cd [project]</div>
+                                <div class="step-desc">プロジェクトを取得</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-command">cp .env.example .env</div>
+                                <div class="step-desc">環境設定ファイルを準備</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose up -d</div>
+                                <div class="step-desc">開発環境を起動</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose logs -f</div>
+                                <div class="step-desc">ログを監視して動作確認</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-card">
+                        <h3>💻 日常開発フロー</h3>
+                        <div class="workflow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose up -d</div>
+                                <div class="step-desc">作業開始時にサービス起動</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose exec web npm test</div>
+                                <div class="step-desc">コンテナ内でテスト実行</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose up --build</div>
+                                <div class="step-desc">コード変更後にリビルド</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose down</div>
+                                <div class="step-desc">作業終了時にクリーンアップ</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-card">
+                        <h3>🚢 本番デプロイフロー</h3>
+                        <div class="workflow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-command">docker build -t myapp:v1.0 .</div>
+                                <div class="step-desc">本番用イメージをビルド</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-command">docker push myapp:v1.0</div>
+                                <div class="step-desc">レジストリにプッシュ</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose -f prod.yml pull</div>
+                                <div class="step-desc">本番環境で最新イメージ取得</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose -f prod.yml up -d</div>
+                                <div class="step-desc">本番サービス起動</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-card">
+                        <h3>🔍 トラブルシューティング</h3>
+                        <div class="workflow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose ps</div>
+                                <div class="step-desc">サービス状態を確認</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-command">docker-compose logs SERVICE</div>
+                                <div class="step-desc">問題のあるサービスのログ確認</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-command">docker exec -it CONTAINER bash</div>
+                                <div class="step-desc">コンテナ内に入って調査</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-command">docker system prune</div>
+                                <div class="step-desc">不要リソースを削除</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-card">
+                        <h3>🧹 定期メンテナンス</h3>
+                        <div class="workflow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-command">docker system df</div>
+                                <div class="step-desc">ディスク使用量確認</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-command">docker image prune -a</div>
+                                <div class="step-desc">未使用イメージ削除</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-command">docker volume prune</div>
+                                <div class="step-desc">未使用ボリューム削除</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-command">docker network prune</div>
+                                <div class="step-desc">未使用ネットワーク削除</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-card">
+                        <h3>🔒 セキュリティベストプラクティス</h3>
+                        <div class="workflow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-command">非rootユーザーでコンテナ実行</div>
+                                <div class="step-desc">USER 1000:1000 をDockerfileに追加</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-command">機密情報は環境変数で管理</div>
+                                <div class="step-desc">.envファイルやDocker secrets使用</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-command">最小権限の原則</div>
+                                <div class="step-desc">必要最小限のポートのみ公開</div>
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-command">定期的なイメージ更新</div>
+                                <div class="step-desc">セキュリティパッチ適用のため</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">📚 実践的な例とテンプレート</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🌐 フルスタックWebアプリ構成</h3>
+                            <div class="code-title">プロジェクト構造</div>
+                            <div class="code-block">project/
+├── docker-compose.yml      # 開発環境設定
+├── docker-compose.prod.yml # 本番環境設定
+├── .env                    # 環境変数
+├── .dockerignore          # 除外ファイル
+├── frontend/
+│   ├── Dockerfile         # フロントエンドビルド
+│   ├── package.json
+│   └── src/
+├── backend/
+│   ├── Dockerfile         # バックエンドAPI
+│   ├── requirements.txt
+│   └── app/
+└── nginx/
+    └── nginx.conf         # リバースプロキシ設定</div>
+
+                            <div class="success-box">
+                                <div class="success-title">✅ このパターンの利点</div>
+                                <ul>
+                                    <li><strong>分離</strong>: フロント・バック・DBが独立</li>
+                                    <li><strong>スケーラブル</strong>: 各サービスを個別にスケール</li>
+                                    <li><strong>開発効率</strong>: 一コマンドで全環境起動</li>
+                                    <li><strong>本番準拠</strong>: 開発と本番で同じ構成</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🔧 CI/CD統合例</h3>
+                            <div class="code-title">GitHub Actions (.github/workflows/deploy.yml)</div>
+                            <div class="code-block">name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build images
+        run: |
+          docker build -t myapp/web:${{ github.sha }} ./frontend
+          docker build -t myapp/api:${{ github.sha }} ./backend
+      
+      - name: Push to registry
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push myapp/web:${{ github.sha }}
+          docker push myapp/api:${{ github.sha }}
+      
+      - name: Deploy to production
+        run: |
+          export IMAGE_TAG=${{ github.sha }}
+          docker-compose -f docker-compose.prod.yml up -d</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全コマンド網羅タブ -->
+        <div id="complete-commands" class="tab-content">
+            <div class="concept-section">
+                <h2 class="concept-title">🔧 Docker全コマンド網羅リファレンス</h2>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🐳 Docker基本コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker --version</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>Dockerバージョン確認</td><td><code>docker --version</code></td></tr>
+                                <tr><td><code>docker info</code></td><td><span style="color: #10b981;">★★★</span></td><td>Docker詳細情報表示</td><td><code>docker info</code></td></tr>
+                                <tr><td><code>docker help</code></td><td><span style="color: #10b981;">★★★</span></td><td>ヘルプ表示</td><td><code>docker help run</code></td></tr>
+                                <tr><td><code>docker login</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>Docker Hubにログイン</td><td><code>docker login -u username</code></td></tr>
+                                <tr><td><code>docker logout</code></td><td><span style="color: #3b82f6;">★★</span></td><td>Docker Hubからログアウト</td><td><code>docker logout</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>📦 イメージ管理コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker images</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>イメージ一覧表示</td><td><code>docker images -a</code></td></tr>
+                                <tr><td><code>docker build</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>Dockerfileからイメージをビルド</td><td><code>docker build -t myapp:latest .</code></td></tr>
+                                <tr><td><code>docker pull</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>イメージをダウンロード</td><td><code>docker pull nginx:alpine</code></td></tr>
+                                <tr><td><code>docker push</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>イメージをアップロード</td><td><code>docker push myapp:latest</code></td></tr>
+                                <tr><td><code>docker rmi</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>イメージを削除</td><td><code>docker rmi myapp:latest</code></td></tr>
+                                <tr><td><code>docker tag</code></td><td><span style="color: #10b981;">★★★</span></td><td>イメージにタグを付与</td><td><code>docker tag myapp:latest myapp:v1.0</code></td></tr>
+                                <tr><td><code>docker history</code></td><td><span style="color: #3b82f6;">★★</span></td><td>イメージのレイヤー履歴表示</td><td><code>docker history nginx</code></td></tr>
+                                <tr><td><code>docker inspect</code></td><td><span style="color: #10b981;">★★★</span></td><td>イメージの詳細情報表示</td><td><code>docker inspect nginx:alpine</code></td></tr>
+                                <tr><td><code>docker save</code></td><td><span style="color: #3b82f6;">★★</span></td><td>イメージをtarファイルに保存</td><td><code>docker save -o myapp.tar myapp:latest</code></td></tr>
+                                <tr><td><code>docker load</code></td><td><span style="color: #3b82f6;">★★</span></td><td>tarファイルからイメージを読み込み</td><td><code>docker load -i myapp.tar</code></td></tr>
+                                <tr><td><code>docker import</code></td><td><span style="color: #6b7280;">★</span></td><td>tarファイルからイメージを作成</td><td><code>docker import backup.tar myapp:restored</code></td></tr>
+                                <tr><td><code>docker commit</code></td><td><span style="color: #6b7280;">★</span></td><td>コンテナからイメージを作成</td><td><code>docker commit container_id myapp:snapshot</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🏃 コンテナ実行・管理コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker run</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>新しいコンテナを作成・実行</td><td><code>docker run -d -p 80:80 nginx</code></td></tr>
+                                <tr><td><code>docker start</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>停止中のコンテナを開始</td><td><code>docker start container_name</code></td></tr>
+                                <tr><td><code>docker stop</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>実行中のコンテナを停止</td><td><code>docker stop container_name</code></td></tr>
+                                <tr><td><code>docker restart</code></td><td><span style="color: #10b981;">★★★</span></td><td>コンテナを再起動</td><td><code>docker restart container_name</code></td></tr>
+                                <tr><td><code>docker pause</code></td><td><span style="color: #6b7280;">★</span></td><td>コンテナを一時停止</td><td><code>docker pause container_name</code></td></tr>
+                                <tr><td><code>docker unpause</code></td><td><span style="color: #6b7280;">★</span></td><td>一時停止を解除</td><td><code>docker unpause container_name</code></td></tr>
+                                <tr><td><code>docker kill</code></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナを強制終了</td><td><code>docker kill container_name</code></td></tr>
+                                <tr><td><code>docker rm</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>コンテナを削除</td><td><code>docker rm container_name</code></td></tr>
+                                <tr><td><code>docker ps</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>コンテナ一覧表示</td><td><code>docker ps -a</code></td></tr>
+                                <tr><td><code>docker exec</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>実行中コンテナでコマンド実行</td><td><code>docker exec -it container_name bash</code></td></tr>
+                                <tr><td><code>docker attach</code></td><td><span style="color: #3b82f6;">★★</span></td><td>実行中コンテナにアタッチ</td><td><code>docker attach container_name</code></td></tr>
+                                <tr><td><code>docker create</code></td><td><span style="color: #10b981;">★★★</span></td><td>コンテナを作成（実行はしない）</td><td><code>docker create --name myapp nginx</code></td></tr>
+                                <tr><td><code>docker rename</code></td><td><span style="color: #6b7280;">★</span></td><td>コンテナ名変更</td><td><code>docker rename old_name new_name</code></td></tr>
+                                <tr><td><code>docker update</code></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナリソース制限更新</td><td><code>docker update --memory=1g container_name</code></td></tr>
+                                <tr><td><code>docker wait</code></td><td><span style="color: #6b7280;">★</span></td><td>コンテナ終了まで待機</td><td><code>docker wait container_name</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>📊 ログ・監視コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker logs</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>コンテナのログ表示</td><td><code>docker logs -f container_name</code></td></tr>
+                                <tr><td><code>docker stats</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>リアルタイムリソース使用状況</td><td><code>docker stats --no-stream</code></td></tr>
+                                <tr><td><code>docker top</code></td><td><span style="color: #10b981;">★★★</span></td><td>コンテナ内のプロセス表示</td><td><code>docker top container_name</code></td></tr>
+                                <tr><td><code>docker port</code></td><td><span style="color: #10b981;">★★★</span></td><td>ポートマッピング表示</td><td><code>docker port container_name</code></td></tr>
+                                <tr><td><code>docker diff</code></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナ内のファイル変更表示</td><td><code>docker diff container_name</code></td></tr>
+                                <tr><td><code>docker events</code></td><td><span style="color: #3b82f6;">★★</span></td><td>Dockerイベントをリアルタイム表示</td><td><code>docker events --since="1h"</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>📁 ファイル・データ操作コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker cp</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>コンテナとホスト間でファイルコピー</td><td><code>docker cp file.txt container_name:/app/</code></td></tr>
+                                <tr><td><code>docker export</code></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナをtarファイルにエクスポート</td><td><code>docker export container_name > backup.tar</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🌐 ネットワーク管理コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker network ls</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>ネットワーク一覧表示</td><td><code>docker network ls</code></td></tr>
+                                <tr><td><code>docker network create</code></td><td><span style="color: #10b981;">★★★</span></td><td>新しいネットワーク作成</td><td><code>docker network create mynetwork</code></td></tr>
+                                <tr><td><code>docker network rm</code></td><td><span style="color: #10b981;">★★★</span></td><td>ネットワーク削除</td><td><code>docker network rm mynetwork</code></td></tr>
+                                <tr><td><code>docker network inspect</code></td><td><span style="color: #3b82f6;">★★</span></td><td>ネットワーク詳細表示</td><td><code>docker network inspect bridge</code></td></tr>
+                                <tr><td><code>docker network connect</code></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナをネットワークに接続</td><td><code>docker network connect mynetwork container_name</code></td></tr>
+                                <tr><td><code>docker network disconnect</code></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナをネットワークから切断</td><td><code>docker network disconnect mynetwork container_name</code></td></tr>
+                                <tr><td><code>docker network prune</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>未使用ネットワークを削除</td><td><code>docker network prune -f</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>💾 ボリューム管理コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker volume ls</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>ボリューム一覧表示</td><td><code>docker volume ls</code></td></tr>
+                                <tr><td><code>docker volume create</code></td><td><span style="color: #10b981;">★★★</span></td><td>新しいボリューム作成</td><td><code>docker volume create myvolume</code></td></tr>
+                                <tr><td><code>docker volume rm</code></td><td><span style="color: #10b981;">★★★</span></td><td>ボリューム削除</td><td><code>docker volume rm myvolume</code></td></tr>
+                                <tr><td><code>docker volume inspect</code></td><td><span style="color: #3b82f6;">★★</span></td><td>ボリューム詳細表示</td><td><code>docker volume inspect myvolume</code></td></tr>
+                                <tr><td><code>docker volume prune</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>未使用ボリュームを削除</td><td><code>docker volume prune -f</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🧹 システム管理・クリーンアップコマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker system df</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>Docker使用ディスク容量表示</td><td><code>docker system df -v</code></td></tr>
+                                <tr><td><code>docker system prune</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>未使用リソースを一括削除</td><td><code>docker system prune -a -f</code></td></tr>
+                                <tr><td><code>docker system info</code></td><td><span style="color: #10b981;">★★★</span></td><td>システム全体情報表示</td><td><code>docker system info</code></td></tr>
+                                <tr><td><code>docker system events</code></td><td><span style="color: #3b82f6;">★★</span></td><td>システムイベント表示</td><td><code>docker system events</code></td></tr>
+                                <tr><td><code>docker container prune</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>停止中コンテナを削除</td><td><code>docker container prune -f</code></td></tr>
+                                <tr><td><code>docker image prune</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>未使用イメージを削除</td><td><code>docker image prune -a -f</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🐙 Docker Compose コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>docker-compose up</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>サービスを起動</td><td><code>docker-compose up -d</code></td></tr>
+                                <tr><td><code>docker-compose down</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>サービスを停止・削除</td><td><code>docker-compose down -v</code></td></tr>
+                                <tr><td><code>docker-compose build</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>イメージをビルド</td><td><code>docker-compose build --no-cache</code></td></tr>
+                                <tr><td><code>docker-compose start</code></td><td><span style="color: #10b981;">★★★</span></td><td>停止中サービスを開始</td><td><code>docker-compose start web</code></td></tr>
+                                <tr><td><code>docker-compose stop</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>サービスを停止</td><td><code>docker-compose stop</code></td></tr>
+                                <tr><td><code>docker-compose restart</code></td><td><span style="color: #10b981;">★★★</span></td><td>サービスを再起動</td><td><code>docker-compose restart web</code></td></tr>
+                                <tr><td><code>docker-compose ps</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>サービス状態表示</td><td><code>docker-compose ps</code></td></tr>
+                                <tr><td><code>docker-compose logs</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>サービスログ表示</td><td><code>docker-compose logs -f web</code></td></tr>
+                                <tr><td><code>docker-compose exec</code></td><td><span style="color: #ef4444;">★★★★★</span></td><td>サービス内でコマンド実行</td><td><code>docker-compose exec web bash</code></td></tr>
+                                <tr><td><code>docker-compose run</code></td><td><span style="color: #f59e0b;">★★★★</span></td><td>ワンタイムコマンド実行</td><td><code>docker-compose run web npm test</code></td></tr>
+                                <tr><td><code>docker-compose pull</code></td><td><span style="color: #10b981;">★★★</span></td><td>イメージを更新</td><td><code>docker-compose pull</code></td></tr>
+                                <tr><td><code>docker-compose push</code></td><td><span style="color: #3b82f6;">★★</span></td><td>イメージをプッシュ</td><td><code>docker-compose push</code></td></tr>
+                                <tr><td><code>docker-compose config</code></td><td><span style="color: #10b981;">★★★</span></td><td>設定ファイル検証</td><td><code>docker-compose config</code></td></tr>
+                                <tr><td><code>docker-compose top</code></td><td><span style="color: #3b82f6;">★★</span></td><td>サービス内プロセス表示</td><td><code>docker-compose top</code></td></tr>
+                                <tr><td><code>docker-compose port</code></td><td><span style="color: #3b82f6;">★★</span></td><td>ポートマッピング表示</td><td><code>docker-compose port web 80</code></td></tr>
+                                <tr><td><code>docker-compose scale</code></td><td><span style="color: #6b7280;">★</span></td><td>サービスをスケール（非推奨）</td><td><code>docker-compose scale web=3</code></td></tr>
+                                <tr><td><code>docker-compose pause</code></td><td><span style="color: #6b7280;">★</span></td><td>サービスを一時停止</td><td><code>docker-compose pause web</code></td></tr>
+                                <tr><td><code>docker-compose unpause</code></td><td><span style="color: #6b7280;">★</span></td><td>一時停止を解除</td><td><code>docker-compose unpause web</code></td></tr>
+                                <tr><td><code>docker-compose kill</code></td><td><span style="color: #3b82f6;">★★</span></td><td>サービスを強制終了</td><td><code>docker-compose kill web</code></td></tr>
+                                <tr><td><code>docker-compose rm</code></td><td><span style="color: #10b981;">★★★</span></td><td>停止中サービスを削除</td><td><code>docker-compose rm -f</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全キー・命令網羅タブ -->
+        <div id="complete-keys" class="tab-content">
+            <div class="concept-section">
+                <h2 class="concept-title">📋 Docker全キー・命令網羅リファレンス</h2>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🐳 Dockerfile命令 完全リファレンス</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>命令</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>FROM</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>ベースイメージを指定（必須）</td><td><code>FROM node:18-alpine</code></td></tr>
+                                <tr><td><strong>WORKDIR</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>作業ディレクトリを設定</td><td><code>WORKDIR /usr/src/app</code></td></tr>
+                                <tr><td><strong>COPY</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>ホストからコンテナにファイルをコピー</td><td><code>COPY . ./</code></td></tr>
+                                <tr><td><strong>RUN</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>ビルド時にコマンドを実行</td><td><code>RUN npm install</code></td></tr>
+                                <tr><td><strong>CMD</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>コンテナのデフォルト実行コマンド</td><td><code>CMD ["node", "server.js"]</code></td></tr>
+                                <tr><td><strong>EXPOSE</strong></td><td><span style="color: #f59e0b;">★★★★</span></td><td>コンテナが使用するポートを明示</td><td><code>EXPOSE 3000</code></td></tr>
+                                <tr><td><strong>ENV</strong></td><td><span style="color: #f59e0b;">★★★★</span></td><td>環境変数を設定</td><td><code>ENV NODE_ENV=production</code></td></tr>
+                                <tr><td><strong>ADD</strong></td><td><span style="color: #10b981;">★★★</span></td><td>COPY + 自動展開・URL取得</td><td><code>ADD archive.tar.gz /</code></td></tr>
+                                <tr><td><strong>ENTRYPOINT</strong></td><td><span style="color: #10b981;">★★★</span></td><td>コンテナの実行可能ファイルを指定</td><td><code>ENTRYPOINT ["docker-entrypoint.sh"]</code></td></tr>
+                                <tr><td><strong>ARG</strong></td><td><span style="color: #10b981;">★★★</span></td><td>ビルド時引数を定義</td><td><code>ARG NODE_VERSION=18</code></td></tr>
+                                <tr><td><strong>LABEL</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>イメージにメタデータを追加</td><td><code>LABEL version="1.0"</code></td></tr>
+                                <tr><td><strong>VOLUME</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>マウントポイントを作成</td><td><code>VOLUME ["/data"]</code></td></tr>
+                                <tr><td><strong>USER</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>実行ユーザーを指定</td><td><code>USER node</code></td></tr>
+                                <tr><td><strong>HEALTHCHECK</strong></td><td><span style="color: #6b7280;">★</span></td><td>ヘルスチェック設定</td><td><code>HEALTHCHECK CMD curl -f http://localhost || exit 1</code></td></tr>
+                                <tr><td><strong>SHELL</strong></td><td><span style="color: #6b7280;">★</span></td><td>デフォルトシェルを変更</td><td><code>SHELL ["/bin/bash", "-c"]</code></td></tr>
+                                <tr><td><strong>STOPSIGNAL</strong></td><td><span style="color: #6b7280;">★</span></td><td>コンテナ停止シグナルを指定</td><td><code>STOPSIGNAL SIGTERM</code></td></tr>
+                                <tr><td><strong>ONBUILD</strong></td><td><span style="color: #6b7280;">★</span></td><td>子イメージで実行される命令</td><td><code>ONBUILD RUN npm install</code></td></tr>
+                                <tr><td><strong>MAINTAINER</strong></td><td><span style="color: #9ca3af;">deprecated</span></td><td>メンテナー情報（非推奨）</td><td><code>LABEL maintainer="user@example.com"</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🐙 Docker Compose YAML キー 完全リファレンス</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>キー</th>
+                                    <th>重要度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>version</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>Composeファイルバージョン</td><td><code>version: '3.9'</code></td></tr>
+                                <tr><td><strong>services</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>サービス定義（必須）</td><td><code>services:<br>&nbsp;&nbsp;web:</code></td></tr>
+                                <tr><td><strong>image</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>使用するDockerイメージ</td><td><code>image: nginx:alpine</code></td></tr>
+                                <tr><td><strong>build</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>Dockerfileからイメージをビルド</td><td><code>build: ./app</code></td></tr>
+                                <tr><td><strong>ports</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>ポートマッピング</td><td><code>ports: ["3000:3000"]</code></td></tr>
+                                <tr><td><strong>environment</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>環境変数</td><td><code>environment:<br>&nbsp;&nbsp;NODE_ENV: production</code></td></tr>
+                                <tr><td><strong>volumes</strong></td><td><span style="color: #ef4444;">★★★★★</span></td><td>ボリュームマウント</td><td><code>volumes: ["./data:/app/data"]</code></td></tr>
+                                <tr><td><strong>depends_on</strong></td><td><span style="color: #f59e0b;">★★★★</span></td><td>サービス依存関係</td><td><code>depends_on: ["db"]</code></td></tr>
+                                <tr><td><strong>networks</strong></td><td><span style="color: #f59e0b;">★★★★</span></td><td>ネットワーク接続</td><td><code>networks: ["frontend"]</code></td></tr>
+                                <tr><td><strong>restart</strong></td><td><span style="color: #f59e0b;">★★★★</span></td><td>再起動ポリシー</td><td><code>restart: unless-stopped</code></td></tr>
+                                <tr><td><strong>command</strong></td><td><span style="color: #10b981;">★★★</span></td><td>デフォルトコマンドの上書き</td><td><code>command: ["npm", "run", "dev"]</code></td></tr>
+                                <tr><td><strong>entrypoint</strong></td><td><span style="color: #10b981;">★★★</span></td><td>エントリーポイントの上書き</td><td><code>entrypoint: ["/entrypoint.sh"]</code></td></tr>
+                                <tr><td><strong>working_dir</strong></td><td><span style="color: #10b981;">★★★</span></td><td>作業ディレクトリ</td><td><code>working_dir: /app</code></td></tr>
+                                <tr><td><strong>user</strong></td><td><span style="color: #10b981;">★★★</span></td><td>実行ユーザー</td><td><code>user: "1000:1000"</code></td></tr>
+                                <tr><td><strong>healthcheck</strong></td><td><span style="color: #10b981;">★★★</span></td><td>ヘルスチェック設定</td><td><code>healthcheck:<br>&nbsp;&nbsp;test: ["CMD", "curl", "-f", "http://localhost"]</code></td></tr>
+                                <tr><td><strong>container_name</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナ名を指定</td><td><code>container_name: my-web-app</code></td></tr>
+                                <tr><td><strong>hostname</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>ホスト名を設定</td><td><code>hostname: web-server</code></td></tr>
+                                <tr><td><strong>labels</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>コンテナにラベル追加</td><td><code>labels:<br>&nbsp;&nbsp;- "traefik.enable=true"</code></td></tr>
+                                <tr><td><strong>expose</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>ポートを他サービスに公開</td><td><code>expose: ["3000"]</code></td></tr>
+                                <tr><td><strong>env_file</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>環境変数ファイルを読み込み</td><td><code>env_file: [".env"]</code></td></tr>
+                                <tr><td><strong>external_links</strong></td><td><span style="color: #6b7280;">★</span></td><td>外部コンテナとリンク</td><td><code>external_links: ["redis_1"]</code></td></tr>
+                                <tr><td><strong>extra_hosts</strong></td><td><span style="color: #6b7280;">★</span></td><td>ホストエントリを追加</td><td><code>extra_hosts:<br>&nbsp;&nbsp;- "somehost:162.242.195.82"</code></td></tr>
+                                <tr><td><strong>logging</strong></td><td><span style="color: #6b7280;">★</span></td><td>ログ設定</td><td><code>logging:<br>&nbsp;&nbsp;driver: json-file</code></td></tr>
+                                <tr><td><strong>pid</strong></td><td><span style="color: #6b7280;">★</span></td><td>PID設定</td><td><code>pid: "host"</code></td></tr>
+                                <tr><td><strong>privileged</strong></td><td><span style="color: #6b7280;">★</span></td><td>特権モード</td><td><code>privileged: true</code></td></tr>
+                                <tr><td><strong>read_only</strong></td><td><span style="color: #6b7280;">★</span></td><td>読み取り専用ファイルシステム</td><td><code>read_only: true</code></td></tr>
+                                <tr><td><strong>security_opt</strong></td><td><span style="color: #6b7280;">★</span></td><td>セキュリティオプション</td><td><code>security_opt:<br>&nbsp;&nbsp;- label:user:USER</code></td></tr>
+                                <tr><td><strong>shm_size</strong></td><td><span style="color: #6b7280;">★</span></td><td>共有メモリサイズ</td><td><code>shm_size: 64M</code></td></tr>
+                                <tr><td><strong>stdin_open</strong></td><td><span style="color: #6b7280;">★</span></td><td>標準入力を開いたままにする</td><td><code>stdin_open: true</code></td></tr>
+                                <tr><td><strong>tty</strong></td><td><span style="color: #6b7280;">★</span></td><td>疑似TTYを割り当て</td><td><code>tty: true</code></td></tr>
+                                <tr><td><strong>ulimits</strong></td><td><span style="color: #6b7280;">★</span></td><td>ulimit設定</td><td><code>ulimits:<br>&nbsp;&nbsp;nproc: 65535</code></td></tr>
+                                <tr><td><strong>cap_add</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>Linuxケーパビリティ追加</td><td><code>cap_add: [SYS_PTRACE]</code></td></tr>
+                                <tr><td><strong>cap_drop</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>Linuxケーパビリティ削除</td><td><code>cap_drop: [NET_ADMIN]</code></td></tr>
+                                <tr><td><strong>cgroup_parent</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>親cgroupを指定</td><td><code>cgroup_parent: m-executor-abcd</code></td></tr>
+                                <tr><td><strong>cpu_count</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>CPU数制限</td><td><code>cpu_count: 2</code></td></tr>
+                                <tr><td><strong>cpu_percent</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>CPU使用率制限</td><td><code>cpu_percent: 50</code></td></tr>
+                                <tr><td><strong>cpu_shares</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>CPU共有重み</td><td><code>cpu_shares: 73</code></td></tr>
+                                <tr><td><strong>cpu_quota</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>CPUクォータ</td><td><code>cpu_quota: 50000</code></td></tr>
+                                <tr><td><strong>cpu_period</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>CPU期間</td><td><code>cpu_period: 100000</code></td></tr>
+                                <tr><td><strong>cpuset</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>使用CPU指定</td><td><code>cpuset: 0,1</code></td></tr>
+                                <tr><td><strong>device_cgroup_rules</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>デバイスcgroupルール</td><td><code>device_cgroup_rules:<br>&nbsp;&nbsp;- 'c 1:3 mr'</code></td></tr>
+                                <tr><td><strong>devices</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>デバイスマッピング</td><td><code>devices:<br>&nbsp;&nbsp;- "/dev/ttyUSB0:/dev/ttyUSB0"</code></td></tr>
+                                <tr><td><strong>dns</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>カスタムDNSサーバー</td><td><code>dns: [8.8.8.8, 9.9.9.9]</code></td></tr>
+                                <tr><td><strong>dns_search</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>DNS検索ドメイン</td><td><code>dns_search: [example.com]</code></td></tr>
+                                <tr><td><strong>domainname</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>ドメイン名設定</td><td><code>domainname: foo.com</code></td></tr>
+                                <tr><td><strong>ipc</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>IPCモード設定</td><td><code>ipc: host</code></td></tr>
+                                <tr><td><strong>isolation</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>コンテナ分離技術指定</td><td><code>isolation: default</code></td></tr>
+                                <tr><td><strong>mac_address</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>MACアドレス指定</td><td><code>mac_address: 02:42:ac:11:65:43</code></td></tr>
+                                <tr><td><strong>mem_limit</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>メモリ制限</td><td><code>mem_limit: 1g</code></td></tr>
+                                <tr><td><strong>mem_reservation</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>メモリ予約</td><td><code>mem_reservation: 512m</code></td></tr>
+                                <tr><td><strong>mem_swappiness</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>スワップ傾向値</td><td><code>mem_swappiness: 0</code></td></tr>
+                                <tr><td><strong>memswap_limit</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>メモリ+スワップ制限</td><td><code>memswap_limit: 2g</code></td></tr>
+                                <tr><td><strong>oom_kill_disable</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>OOMキラー無効化</td><td><code>oom_kill_disable: true</code></td></tr>
+                                <tr><td><strong>oom_score_adj</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>OOMスコア調整</td><td><code>oom_score_adj: 500</code></td></tr>
+                                <tr><td><strong>pids_limit</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>PID数制限</td><td><code>pids_limit: 10</code></td></tr>
+                                <tr><td><strong>platform</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>プラットフォーム指定</td><td><code>platform: linux/amd64</code></td></tr>
+                                <tr><td><strong>runtime</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>ランタイム指定</td><td><code>runtime: nvidia</code></td></tr>
+                                <tr><td><strong>scale</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>サービススケール数</td><td><code>scale: 3</code></td></tr>
+                                <tr><td><strong>stop_grace_period</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>停止猶予期間</td><td><code>stop_grace_period: 1m30s</code></td></tr>
+                                <tr><td><strong>stop_signal</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>停止シグナル</td><td><code>stop_signal: SIGUSR1</code></td></tr>
+                                <tr><td><strong>sysctls</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>カーネルパラメータ</td><td><code>sysctls:<br>&nbsp;&nbsp;net.core.somaxconn: 1024</code></td></tr>
+                                <tr><td><strong>tmpfs</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>tmpfsマウント</td><td><code>tmpfs: [/run, /tmp]</code></td></tr>
+                                <tr><td><strong>userns_mode</strong></td><td><span style="color: #9ca3af;">特殊</span></td><td>ユーザー名前空間モード</td><td><code>userns_mode: "host"</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🌐 Docker Compose トップレベルキー</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>キー</th>
+                                    <th>必須度</th>
+                                    <th>説明</th>
+                                    <th>使用例</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>networks</strong></td><td><span style="color: #f59e0b;">★★★★</span></td><td>カスタムネットワーク定義</td><td><code>networks:<br>&nbsp;&nbsp;frontend:<br>&nbsp;&nbsp;&nbsp;&nbsp;driver: bridge</code></td></tr>
+                                <tr><td><strong>volumes</strong></td><td><span style="color: #f59e0b;">★★★★</span></td><td>名前付きボリューム定義</td><td><code>volumes:<br>&nbsp;&nbsp;db-data:<br>&nbsp;&nbsp;&nbsp;&nbsp;driver: local</code></td></tr>
+                                <tr><td><strong>configs</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>設定ファイル定義</td><td><code>configs:<br>&nbsp;&nbsp;my_config:<br>&nbsp;&nbsp;&nbsp;&nbsp;file: ./my_config.txt</code></td></tr>
+                                <tr><td><strong>secrets</strong></td><td><span style="color: #3b82f6;">★★</span></td><td>機密情報定義</td><td><code>secrets:<br>&nbsp;&nbsp;my_secret:<br>&nbsp;&nbsp;&nbsp;&nbsp;file: ./my_secret.txt</code></td></tr>
+                                <tr><td><strong>x-*</strong></td><td><span style="color: #6b7280;">★</span></td><td>拡張フィールド（再利用可能）</td><td><code>x-logging: &logging<br>&nbsp;&nbsp;driver: json-file</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // すべてのタブボタンからactiveクラスを削除
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 選択されたタブをアクティブに
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function scrollTabs(direction) {
+            const tabsContainer = document.getElementById('tabsContainer');
+            const scrollAmount = 200; // スクロール量（px）
+            
+            if (direction === -1) {
+                // 左にスクロール
+                tabsContainer.scrollBy({
+                    left: -scrollAmount,
+                    behavior: 'smooth'
+                });
+            } else {
+                // 右にスクロール
+                tabsContainer.scrollBy({
+                    left: scrollAmount,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // 矢印ボタンの表示/非表示制御
+        function updateTabNavButtons() {
+            const tabsContainer = document.getElementById('tabsContainer');
+            const leftButton = document.querySelector('.tab-nav-left');
+            const rightButton = document.querySelector('.tab-nav-right');
+            
+            const canScrollLeft = tabsContainer.scrollLeft > 0;
+            const canScrollRight = tabsContainer.scrollLeft < (tabsContainer.scrollWidth - tabsContainer.clientWidth);
+            
+            leftButton.style.opacity = canScrollLeft ? '1' : '0.3';
+            rightButton.style.opacity = canScrollRight ? '1' : '0.3';
+            leftButton.style.pointerEvents = canScrollLeft ? 'auto' : 'none';
+            rightButton.style.pointerEvents = canScrollRight ? 'auto' : 'none';
+        }
+
+        // ページ読み込み時とリサイズ時に矢印ボタンの状態を更新
+        window.addEventListener('load', updateTabNavButtons);
+        window.addEventListener('resize', updateTabNavButtons);
+        document.getElementById('tabsContainer').addEventListener('scroll', updateTabNavButtons);
+    </script>
+</body>
+</html>

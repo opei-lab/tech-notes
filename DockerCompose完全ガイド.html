@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DockerCompose完全ガイド</title>
+    <style>
+        :root {
+            --primary: #0db7ed;
+            --primary-dark: #0a94c2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="search"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="search"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        th:hover {
+            background: rgba(0,0,0,0.02);
+        }
+
+        th::after {
+            content: '⇅';
+            margin-left: 0.5rem;
+            opacity: 0.3;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        tbody tr.expanded {
+            background: #f0f9ff;
+        }
+
+        td {
+            padding: 1rem;
+            vertical-align: top;
+        }
+
+        .key-name {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge-required {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-optional {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .badge-common {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .importance {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .star {
+            color: #fbbf24;
+            font-size: 1rem;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #f3f4f6;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .expand-row {
+            display: none;
+            background: #f8fafc;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .expand-row.show {
+            display: table-row;
+        }
+
+        .expand-content {
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .example-container {
+            margin-top: 1rem;
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        code {
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .option-item {
+            background: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        .option-name {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-family: monospace;
+        }
+
+        .option-desc {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .usage-hint {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .not-found {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Docker Compose 完全リファレンス</h1>
+            <p class="subtitle">すべてのキーを網羅した包括的なガイド</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="search-container">
+            <div class="search-box">
+                <input type="search" id="searchInput" placeholder="キー名、説明、カテゴリで検索...">
+            </div>
+            <div class="filters">
+                <div class="filter-group">
+                    <span class="filter-label">重要度:</span>
+                    <select id="importanceFilter">
+                        <option value="">すべて</option>
+                        <option value="5">★★★★★ 必須</option>
+                        <option value="4">★★★★ 高</option>
+                        <option value="3">★★★ 中</option>
+                        <option value="2">★★ 低</option>
+                        <option value="1">★ 稀</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">カテゴリ:</span>
+                    <select id="categoryFilter">
+                        <option value="">すべて</option>
+                        <option value="top-level">トップレベル</option>
+                        <option value="service">サービス設定</option>
+                        <option value="build">ビルド関連</option>
+                        <option value="network">ネットワーク</option>
+                        <option value="volume">ボリューム</option>
+                        <option value="deploy">デプロイ</option>
+                        <option value="resource">リソース制限</option>
+                        <option value="security">セキュリティ</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">必須/オプション:</span>
+                    <select id="requiredFilter">
+                        <option value="">すべて</option>
+                        <option value="required">必須</option>
+                        <option value="optional">オプション</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalKeys">0</div>
+                <div class="stat-label">総キー数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="filteredKeys">0</div>
+                <div class="stat-label">表示中</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="commonKeys">0</div>
+                <div class="stat-label">よく使うキー</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="requiredKeys">0</div>
+                <div class="stat-label">必須キー</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th data-sort="key">キー名</th>
+                        <th data-sort="description">説明</th>
+                        <th data-sort="importance">重要度</th>
+                        <th data-sort="required">必須/オプション</th>
+                        <th data-sort="category">カテゴリ</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- データはJavaScriptで動的に生成 -->
+                </tbody>
+            </table>
+            <div class="not-found" id="notFound" style="display: none;">
+                <p>検索条件に一致するキーが見つかりませんでした。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Docker Composeキーの完全なデータ
+        const composeKeys = [
+            // トップレベルキー
+            {
+                key: 'version',
+                description: 'Compose ファイルのバージョンを指定',
+                importance: 3,
+                required: 'optional',
+                category: 'top-level',
+                common: false,
+                example: `version: '3.9'`,
+                details: '新しいバージョンのDockerでは省略可能。古いバージョンとの互換性が必要な場合に指定。',
+                options: ['2', '2.x', '3', '3.x']
+            },
+            {
+                key: 'services',
+                description: 'アプリケーションを構成するサービスの定義',
+                importance: 5,
+                required: 'required',
+                category: 'top-level',
+                common: true,
+                example: `services:
+  web:
+    image: nginx
+  db:
+    image: postgres`,
+                details: 'すべてのCompose設定で必須。各サービスをキーとして定義する。'
+            },
+            {
+                key: 'networks',
+                description: 'カスタムネットワークの定義',
+                importance: 3,
+                required: 'optional',
+                category: 'top-level',
+                common: true,
+                example: `networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: overlay`,
+                details: 'サービス間の通信を制御するためのネットワークを定義。',
+                options: [
+                    { name: 'driver', desc: 'ネットワークドライバ (bridge, overlay, host, none)' },
+                    { name: 'driver_opts', desc: 'ドライバーオプション' },
+                    { name: 'attachable', desc: 'Swarmで手動接続を許可' },
+                    { name: 'ipam', desc: 'IPアドレス管理設定' }
+                ]
+            },
+            {
+                key: 'volumes',
+                description: '名前付きボリュームの定義',
+                importance: 4,
+                required: 'optional',
+                category: 'top-level',
+                common: true,
+                example: `volumes:
+  db-data:
+    driver: local
+  shared-data:
+    external: true`,
+                details: 'データの永続化に使用する名前付きボリュームを定義。',
+                options: [
+                    { name: 'driver', desc: 'ボリュームドライバ' },
+                    { name: 'driver_opts', desc: 'ドライバーオプション' },
+                    { name: 'external', desc: '外部ボリュームの使用' },
+                    { name: 'labels', desc: 'メタデータラベル' }
+                ]
+            },
+            {
+                key: 'secrets',
+                description: 'シークレット（機密情報）の定義',
+                importance: 3,
+                required: 'optional',
+                category: 'top-level',
+                common: false,
+                example: `secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  api_key:
+    external: true`,
+                details: 'パスワードやAPIキーなどの機密情報を安全に管理。',
+                options: [
+                    { name: 'file', desc: 'シークレットファイルのパス' },
+                    { name: 'external', desc: '外部シークレットの使用' },
+                    { name: 'name', desc: '外部シークレット名' }
+                ]
+            },
+            {
+                key: 'configs',
+                description: '設定ファイルの定義',
+                importance: 2,
+                required: 'optional',
+                category: 'top-level',
+                common: false,
+                example: `configs:
+  nginx_config:
+    file: ./nginx.conf
+  app_config:
+    external: true`,
+                details: 'Swarmモードでの設定ファイル管理に使用。',
+                options: [
+                    { name: 'file', desc: '設定ファイルのパス' },
+                    { name: 'external', desc: '外部設定の使用' },
+                    { name: 'name', desc: '外部設定名' }
+                ]
+            },
+
+            // サービス設定キー
+            {
+                key: 'image',
+                description: '使用するDockerイメージ',
+                importance: 5,
+                required: 'required',
+                category: 'service',
+                common: true,
+                example: `image: nginx:alpine
+image: myregistry.com/myapp:1.0`,
+                details: 'buildと排他的。どちらか一つは必須。',
+                hint: 'タグを指定しない場合は:latestが使用される'
+            },
+            {
+                key: 'build',
+                description: 'イメージのビルド設定',
+                importance: 5,
+                required: 'required',
+                category: 'service',
+                common: true,
+                example: `build: .
+build:
+  context: ./app
+  dockerfile: Dockerfile.prod
+  args:
+    - NODE_VERSION=18`,
+                details: 'imageと排他的。どちらか一つは必須。',
+                options: [
+                    { name: 'context', desc: 'ビルドコンテキストのパス' },
+                    { name: 'dockerfile', desc: 'Dockerfileのパス' },
+                    { name: 'args', desc: 'ビルド引数' },
+                    { name: 'target', desc: 'マルチステージビルドのターゲット' },
+                    { name: 'cache_from', desc: 'キャッシュソース' },
+                    { name: 'labels', desc: 'イメージラベル' },
+                    { name: 'shm_size', desc: 'ビルド時の/dev/shmサイズ' }
+                ]
+            },
+            {
+                key: 'container_name',
+                description: 'コンテナ名を指定',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `container_name: my-web-app`,
+                details: '固定のコンテナ名が必要な場合に使用。スケーリング時は使用不可。'
+            },
+            {
+                key: 'command',
+                description: 'デフォルトコマンドを上書き',
+                importance: 4,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `command: npm start
+command: ["python", "app.py", "--debug"]`,
+                details: 'DockerfileのCMDを上書き。'
+            },
+            {
+                key: 'entrypoint',
+                description: 'エントリーポイントを上書き',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `entrypoint: /app/startup.sh
+entrypoint: ["python", "-m"]`,
+                details: 'DockerfileのENTRYPOINTを上書き。'
+            },
+            {
+                key: 'environment',
+                description: '環境変数の設定',
+                importance: 5,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `environment:
+  - NODE_ENV=production
+  - DB_HOST=postgres
+environment:
+  NODE_ENV: production
+  DB_HOST: postgres`,
+                details: 'コンテナ内で使用する環境変数を設定。'
+            },
+            {
+                key: 'env_file',
+                description: '環境変数ファイルの読み込み',
+                importance: 4,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `env_file: .env
+env_file:
+  - .env
+  - .env.production`,
+                details: '.envファイルから環境変数を一括読み込み。'
+            },
+            {
+                key: 'ports',
+                description: 'ポートマッピング',
+                importance: 5,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `ports:
+  - "8080:80"
+  - "127.0.0.1:5432:5432"
+  - target: 80
+    published: 8080
+    protocol: tcp
+    mode: host`,
+                details: 'ホストとコンテナ間のポート転送を設定。',
+                hint: 'ホストポートを指定しない場合はランダムポートが割り当てられる'
+            },
+            {
+                key: 'expose',
+                description: '内部ポートの公開',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `expose:
+  - "3000"
+  - "8080"`,
+                details: 'リンクされたサービスにのみポートを公開（ホストには公開しない）。'
+            },
+            {
+                key: 'volumes',
+                description: 'ボリュームマウント',
+                importance: 5,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `volumes:
+  - ./app:/usr/src/app
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+  - data-volume:/data
+  - type: bind
+    source: ./config
+    target: /etc/config
+    read_only: true`,
+                details: 'ホストやボリュームをコンテナにマウント。',
+                options: [
+                    { name: 'type', desc: 'マウントタイプ (bind, volume, tmpfs)' },
+                    { name: 'source', desc: 'ソースパス' },
+                    { name: 'target', desc: 'ターゲットパス' },
+                    { name: 'read_only', desc: '読み取り専用' },
+                    { name: 'consistency', desc: '同期モード (cached, delegated)' }
+                ]
+            },
+            {
+                key: 'tmpfs',
+                description: 'tmpfsマウント',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `tmpfs: /tmp
+tmpfs:
+  - /tmp
+  - /run:size=100M`,
+                details: 'メモリ内の一時ファイルシステムをマウント。'
+            },
+            {
+                key: 'depends_on',
+                description: 'サービスの依存関係',
+                importance: 4,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `depends_on:
+  - db
+  - redis
+depends_on:
+  db:
+    condition: service_healthy
+  redis:
+    condition: service_started`,
+                details: 'サービスの起動順序を制御。',
+                options: [
+                    { name: 'condition', desc: '待機条件 (service_started, service_healthy, service_completed_successfully)' }
+                ]
+            },
+            {
+                key: 'healthcheck',
+                description: 'ヘルスチェック設定',
+                importance: 4,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s`,
+                details: 'コンテナの健全性を定期的にチェック。',
+                options: [
+                    { name: 'test', desc: 'チェックコマンド' },
+                    { name: 'interval', desc: 'チェック間隔' },
+                    { name: 'timeout', desc: 'タイムアウト' },
+                    { name: 'retries', desc: 'リトライ回数' },
+                    { name: 'start_period', desc: '開始猶予期間' }
+                ]
+            },
+            {
+                key: 'restart',
+                description: '再起動ポリシー',
+                importance: 4,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `restart: always
+restart: on-failure:5`,
+                details: 'コンテナが停止した際の再起動動作を設定。',
+                options: ['no', 'always', 'on-failure', 'unless-stopped']
+            },
+            {
+                key: 'logging',
+                description: 'ログ設定',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `logging:
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"`,
+                details: 'コンテナのログ出力を制御。',
+                options: [
+                    { name: 'driver', desc: 'ログドライバー (json-file, syslog, journald等)' },
+                    { name: 'options', desc: 'ドライバー固有のオプション' }
+                ]
+            },
+            {
+                key: 'networks',
+                description: 'ネットワーク接続',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: true,
+                example: `networks:
+  - frontend
+  - backend
+networks:
+  frontend:
+    aliases:
+      - web-app`,
+                details: 'サービスが接続するネットワークを指定。',
+                options: [
+                    { name: 'aliases', desc: 'ネットワーク内の別名' },
+                    { name: 'ipv4_address', desc: '固定IPv4アドレス' },
+                    { name: 'ipv6_address', desc: '固定IPv6アドレス' }
+                ]
+            },
+            {
+                key: 'extra_hosts',
+                description: 'ホスト名の追加',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `extra_hosts:
+  - "host.docker.internal:host-gateway"
+  - "myhost:192.168.1.100"`,
+                details: '/etc/hostsにエントリーを追加。'
+            },
+            {
+                key: 'dns',
+                description: 'DNSサーバー設定',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `dns: 8.8.8.8
+dns:
+  - 8.8.8.8
+  - 1.1.1.1`,
+                details: 'カスタムDNSサーバーを指定。'
+            },
+            {
+                key: 'dns_search',
+                description: 'DNS検索ドメイン',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `dns_search: example.com
+dns_search:
+  - dc1.example.com
+  - dc2.example.com`,
+                details: 'DNS検索ドメインを設定。'
+            },
+            {
+                key: 'user',
+                description: '実行ユーザー',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `user: "1000:1000"
+user: www-data`,
+                details: 'コンテナ内のプロセス実行ユーザーを指定。'
+            },
+            {
+                key: 'working_dir',
+                description: '作業ディレクトリ',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `working_dir: /app`,
+                details: 'コンテナ内の作業ディレクトリを設定。'
+            },
+            {
+                key: 'labels',
+                description: 'メタデータラベル',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `labels:
+  com.example.description: "Web Application"
+  com.example.version: "1.0"`,
+                details: 'コンテナにメタデータを付与。'
+            },
+            {
+                key: 'stop_signal',
+                description: '停止シグナル',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `stop_signal: SIGUSR1`,
+                details: 'コンテナ停止時のシグナルを指定。'
+            },
+            {
+                key: 'stop_grace_period',
+                description: '停止猶予期間',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `stop_grace_period: 30s`,
+                details: '強制停止までの待機時間。'
+            },
+            {
+                key: 'ulimits',
+                description: 'リソース制限',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `ulimits:
+  memlock:
+    soft: -1
+    hard: -1
+  nofile:
+    soft: 65536
+    hard: 65536`,
+                details: 'プロセスのリソース制限を設定。'
+            },
+            {
+                key: 'cpu_count',
+                description: 'CPU数制限',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `cpu_count: 2`,
+                details: '使用可能なCPU数を制限。'
+            },
+            {
+                key: 'cpu_percent',
+                description: 'CPU使用率制限',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `cpu_percent: 50`,
+                details: 'CPU使用率をパーセンテージで制限。'
+            },
+            {
+                key: 'cpus',
+                description: 'CPU割り当て',
+                importance: 3,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `cpus: '0.5'
+cpus: '2'`,
+                details: 'CPU数を小数で指定。'
+            },
+            {
+                key: 'cpu_shares',
+                description: 'CPU優先度',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `cpu_shares: 512`,
+                details: 'CPU時間の相対的な重み。'
+            },
+            {
+                key: 'cpu_quota',
+                description: 'CPUクォータ',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `cpu_quota: 50000`,
+                details: 'CPU時間のマイクロ秒制限。'
+            },
+            {
+                key: 'cpu_period',
+                description: 'CPU期間',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `cpu_period: 100000`,
+                details: 'CPUクォータの期間（マイクロ秒）。'
+            },
+            {
+                key: 'cpuset',
+                description: 'CPU割り当て指定',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `cpuset: '0,1'`,
+                details: '使用するCPUコアを指定。'
+            },
+            {
+                key: 'mem_limit',
+                description: 'メモリ上限',
+                importance: 3,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `mem_limit: 512m
+mem_limit: 2g`,
+                details: 'メモリ使用量の上限を設定。'
+            },
+            {
+                key: 'mem_reservation',
+                description: 'メモリ予約',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `mem_reservation: 256m`,
+                details: 'メモリのソフトリミット。'
+            },
+            {
+                key: 'memswap_limit',
+                description: 'メモリ+スワップ上限',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `memswap_limit: 1g`,
+                details: 'メモリとスワップの合計上限。'
+            },
+            {
+                key: 'mem_swappiness',
+                description: 'スワップ使用傾向',
+                importance: 1,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `mem_swappiness: 60`,
+                details: 'スワップ使用の積極性（0-100）。'
+            },
+            {
+                key: 'shm_size',
+                description: '共有メモリサイズ',
+                importance: 2,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `shm_size: '2gb'`,
+                details: '/dev/shmのサイズを設定。'
+            },
+            {
+                key: 'devices',
+                description: 'デバイスマッピング',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `devices:
+  - "/dev/ttyUSB0:/dev/ttyUSB0"
+  - "/dev/sda:/dev/xvda:rwm"`,
+                details: 'ホストデバイスをコンテナに公開。'
+            },
+            {
+                key: 'privileged',
+                description: '特権モード',
+                importance: 2,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `privileged: true`,
+                details: 'コンテナに全権限を付与（セキュリティリスクあり）。',
+                hint: 'セキュリティ上の理由から本番環境では避けるべき'
+            },
+            {
+                key: 'read_only',
+                description: '読み取り専用ファイルシステム',
+                importance: 2,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `read_only: true`,
+                details: 'ルートファイルシステムを読み取り専用にする。'
+            },
+            {
+                key: 'security_opt',
+                description: 'セキュリティオプション',
+                importance: 2,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `security_opt:
+  - no-new-privileges:true
+  - seccomp:unconfined`,
+                details: 'セキュリティ関連のオプションを設定。'
+            },
+            {
+                key: 'cap_add',
+                description: 'ケイパビリティ追加',
+                importance: 2,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `cap_add:
+  - NET_ADMIN
+  - SYS_ADMIN`,
+                details: 'Linuxケイパビリティを追加。'
+            },
+            {
+                key: 'cap_drop',
+                description: 'ケイパビリティ削除',
+                importance: 2,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `cap_drop:
+  - MKNOD
+  - AUDIT_WRITE`,
+                details: 'Linuxケイパビリティを削除。'
+            },
+            {
+                key: 'cgroup_parent',
+                description: 'cgroupの親',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `cgroup_parent: /docker/daemon`,
+                details: 'コンテナのcgroup親を指定。'
+            },
+            {
+                key: 'userns_mode',
+                description: 'ユーザー名前空間モード',
+                importance: 1,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `userns_mode: "host"`,
+                details: 'ユーザー名前空間の設定。'
+            },
+            {
+                key: 'sysctls',
+                description: 'カーネルパラメータ',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `sysctls:
+  net.core.somaxconn: 1024
+  net.ipv4.tcp_syncookies: 0`,
+                details: 'コンテナ内のカーネルパラメータを設定。'
+            },
+            {
+                key: 'stdin_open',
+                description: '標準入力オープン',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `stdin_open: true`,
+                details: 'docker run -iと同等。'
+            },
+            {
+                key: 'tty',
+                description: '疑似TTY割り当て',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `tty: true`,
+                details: 'docker run -tと同等。'
+            },
+            {
+                key: 'init',
+                description: 'initプロセス使用',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `init: true`,
+                details: 'コンテナ内でinitプロセスを実行（ゾンビプロセス対策）。'
+            },
+            {
+                key: 'external_links',
+                description: '外部コンテナリンク',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `external_links:
+  - redis_1
+  - project_db_1:mysql`,
+                details: 'Compose外のコンテナへのリンク（非推奨）。'
+            },
+            {
+                key: 'links',
+                description: 'サービス間リンク',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `links:
+  - db
+  - db:database`,
+                details: 'サービス間のリンク（非推奨、networksを使用推奨）。'
+            },
+            {
+                key: 'pid',
+                description: 'PID名前空間',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `pid: "host"
+pid: "container:redis"`,
+                details: 'PID名前空間の共有設定。'
+            },
+            {
+                key: 'ipc',
+                description: 'IPC名前空間',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `ipc: "host"
+ipc: "container:redis"`,
+                details: 'IPC名前空間の共有設定。'
+            },
+            {
+                key: 'network_mode',
+                description: 'ネットワークモード',
+                importance: 2,
+                required: 'optional',
+                category: 'network',
+                common: false,
+                example: `network_mode: "bridge"
+network_mode: "host"
+network_mode: "none"
+network_mode: "container:redis"`,
+                details: 'ネットワークモードを設定。'
+            },
+            {
+                key: 'mac_address',
+                description: 'MACアドレス',
+                importance: 1,
+                required: 'optional',
+                category: 'network',
+                common: false,
+                example: `mac_address: "02:42:ac:11:65:43"`,
+                details: 'コンテナのMACアドレスを指定。'
+            },
+            {
+                key: 'scale',
+                description: 'サービスのスケール数',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `scale: 3`,
+                details: 'サービスのレプリカ数を指定（非推奨）。'
+            },
+            {
+                key: 'isolation',
+                description: 'コンテナ分離技術',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `isolation: hyperv`,
+                details: 'Windows環境での分離モード。'
+            },
+            {
+                key: 'platform',
+                description: 'プラットフォーム指定',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `platform: linux/amd64
+platform: linux/arm64/v8`,
+                details: 'イメージのターゲットプラットフォーム。'
+            },
+            {
+                key: 'profiles',
+                description: 'プロファイル',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `profiles:
+  - debug
+  - development`,
+                details: '特定のプロファイルでのみサービスを起動。'
+            },
+            {
+                key: 'pull_policy',
+                description: 'イメージプル方針',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `pull_policy: always
+pull_policy: never
+pull_policy: if_not_present`,
+                details: 'イメージのプル動作を制御。'
+            },
+            {
+                key: 'runtime',
+                description: 'ランタイム指定',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `runtime: nvidia
+runtime: runc`,
+                details: '代替コンテナランタイムを使用。'
+            },
+            {
+                key: 'blkio_config',
+                description: 'ブロックIOの設定',
+                importance: 1,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `blkio_config:
+  weight: 300
+  weight_device:
+    - path: /dev/sda
+      weight: 400`,
+                details: 'ブロックIO帯域幅の設定。'
+            },
+            {
+                key: 'device_cgroup_rules',
+                description: 'デバイスcgroupルール',
+                importance: 1,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `device_cgroup_rules:
+  - 'c 1:* rmw'`,
+                details: 'デバイスへのアクセス制御ルール。'
+            },
+            {
+                key: 'oom_kill_disable',
+                description: 'OOMキル無効化',
+                importance: 1,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `oom_kill_disable: true`,
+                details: 'Out of Memoryキルを無効化。'
+            },
+            {
+                key: 'oom_score_adj',
+                description: 'OOMスコア調整',
+                importance: 1,
+                required: 'optional',
+                category: 'resource',
+                common: false,
+                example: `oom_score_adj: 500`,
+                details: 'OOMキラーの優先度を調整（-1000から1000）。'
+            },
+            {
+                key: 'group_add',
+                description: '追加グループ',
+                importance: 2,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `group_add:
+  - docker
+  - audio`,
+                details: 'コンテナ内のユーザーに追加グループを設定。'
+            },
+            {
+                key: 'deploy',
+                description: 'Swarmデプロイ設定',
+                importance: 3,
+                required: 'optional',
+                category: 'deploy',
+                common: false,
+                example: `deploy:
+  replicas: 3
+  update_config:
+    parallelism: 1
+    delay: 10s
+  restart_policy:
+    condition: on-failure`,
+                details: 'Docker Swarmモードでのデプロイ設定。',
+                options: [
+                    { name: 'mode', desc: 'デプロイモード (replicated, global)' },
+                    { name: 'replicas', desc: 'レプリカ数' },
+                    { name: 'placement', desc: '配置制約' },
+                    { name: 'update_config', desc: '更新設定' },
+                    { name: 'rollback_config', desc: 'ロールバック設定' },
+                    { name: 'resources', desc: 'リソース制限' },
+                    { name: 'restart_policy', desc: '再起動ポリシー' },
+                    { name: 'labels', desc: 'サービスラベル' }
+                ]
+            },
+            {
+                key: 'secrets (service)',
+                description: 'シークレットの使用',
+                importance: 3,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `secrets:
+  - db_password
+  - source: api_key
+    target: /run/secrets/api_key
+    uid: '1000'
+    gid: '1000'
+    mode: 0400`,
+                details: 'シークレットをサービスにマウント。',
+                options: [
+                    { name: 'source', desc: 'シークレット名' },
+                    { name: 'target', desc: 'マウント先パス' },
+                    { name: 'uid', desc: '所有者UID' },
+                    { name: 'gid', desc: '所有者GID' },
+                    { name: 'mode', desc: 'ファイルモード' }
+                ]
+            },
+            {
+                key: 'configs (service)',
+                description: '設定ファイルの使用',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `configs:
+  - nginx_config
+  - source: app_config
+    target: /app/config.yml`,
+                details: '設定ファイルをサービスにマウント。',
+                options: [
+                    { name: 'source', desc: '設定名' },
+                    { name: 'target', desc: 'マウント先パス' },
+                    { name: 'uid', desc: '所有者UID' },
+                    { name: 'gid', desc: '所有者GID' },
+                    { name: 'mode', desc: 'ファイルモード' }
+                ]
+            },
+            {
+                key: 'credential_spec',
+                description: '認証情報仕様',
+                importance: 1,
+                required: 'optional',
+                category: 'security',
+                common: false,
+                example: `credential_spec:
+  config: my_credential_spec`,
+                details: 'Windows環境での認証情報設定。'
+            },
+            {
+                key: 'domainname',
+                description: 'ドメイン名',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `domainname: example.com`,
+                details: 'コンテナのドメイン名を設定。'
+            },
+            {
+                key: 'hostname',
+                description: 'ホスト名',
+                importance: 2,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `hostname: myapp`,
+                details: 'コンテナのホスト名を設定。'
+            },
+            {
+                key: 'storage_opt',
+                description: 'ストレージオプション',
+                importance: 1,
+                required: 'optional',
+                category: 'service',
+                common: false,
+                example: `storage_opt:
+  size: '120G'`,
+                details: 'ストレージドライバーのオプション。'
+            }
+        ];
+
+        // データの初期化とレンダリング
+        let filteredData = [...composeKeys];
+        let sortColumn = '';
+        let sortDirection = 'asc';
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const notFound = document.getElementById('notFound');
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '';
+                notFound.style.display = 'block';
+                updateStats();
+                return;
+            }
+            
+            notFound.style.display = 'none';
+            tbody.innerHTML = filteredData.map((item, index) => `
+                <tr onclick="toggleRow(${index})">
+                    <td><span class="key-name">${item.key}</span></td>
+                    <td>${item.description}</td>
+                    <td>
+                        <div class="importance">
+                            ${'★'.repeat(item.importance)}${'☆'.repeat(5 - item.importance)}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge badge-${item.required}">
+                            ${item.required === 'required' ? '必須' : 'オプション'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="category-tag">${getCategoryName(item.category)}</span>
+                    </td>
+                </tr>
+                <tr class="expand-row" id="expand-${index}">
+                    <td colspan="5">
+                        <div class="expand-content">
+                            ${item.details ? `<p>${item.details}</p>` : ''}
+                            ${item.hint ? `<div class="usage-hint">${item.hint}</div>` : ''}
+                            ${item.example ? `
+                                <div class="example-container">
+                                    <div class="example-title">使用例:</div>
+                                    <pre><code>${escapeHtml(item.example)}</code><button class="copy-btn" onclick="copyCode(this)">コピー</button></pre>
+                                </div>
+                            ` : ''}
+                            ${item.options ? `
+                                <div class="example-title">オプション:</div>
+                                <div class="options-grid">
+                                    ${item.options.map(opt => 
+                                        typeof opt === 'string' 
+                                            ? `<div class="option-item"><span class="option-name">${opt}</span></div>`
+                                            : `<div class="option-item">
+                                                <div class="option-name">${opt.name}</div>
+                                                <div class="option-desc">${opt.desc}</div>
+                                               </div>`
+                                    ).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            updateStats();
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                'top-level': 'トップレベル',
+                'service': 'サービス設定',
+                'build': 'ビルド関連',
+                'network': 'ネットワーク',
+                'volume': 'ボリューム',
+                'deploy': 'デプロイ',
+                'resource': 'リソース制限',
+                'security': 'セキュリティ'
+            };
+            return names[category] || category;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toggleRow(index) {
+            const expandRow = document.getElementById(`expand-${index}`);
+            const mainRow = expandRow.previousElementSibling;
+            
+            if (expandRow.classList.contains('show')) {
+                expandRow.classList.remove('show');
+                mainRow.classList.remove('expanded');
+            } else {
+                // 他の開いている行を閉じる
+                document.querySelectorAll('.expand-row.show').forEach(row => {
+                    row.classList.remove('show');
+                    row.previousElementSibling.classList.remove('expanded');
+                });
+                expandRow.classList.add('show');
+                mainRow.classList.add('expanded');
+            }
+        }
+
+        function copyCode(button) {
+            const code = button.previousElementSibling.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = 'コピー済み';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'コピー';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const importanceFilter = document.getElementById('importanceFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const requiredFilter = document.getElementById('requiredFilter').value;
+            
+            filteredData = composeKeys.filter(item => {
+                const matchesSearch = searchTerm === '' || 
+                    item.key.toLowerCase().includes(searchTerm) ||
+                    item.description.toLowerCase().includes(searchTerm) ||
+                    item.category.toLowerCase().includes(searchTerm);
+                
+                const matchesImportance = importanceFilter === '' || 
+                    item.importance.toString() === importanceFilter;
+                
+                const matchesCategory = categoryFilter === '' || 
+                    item.category === categoryFilter;
+                
+                const matchesRequired = requiredFilter === '' || 
+                    item.required === requiredFilter;
+                
+                return matchesSearch && matchesImportance && matchesCategory && matchesRequired;
+            });
+            
+            renderTable();
+        }
+
+        function sortTable(column) {
+            const th = document.querySelector(`th[data-sort="${column}"]`);
+            
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (column === 'importance') {
+                    aVal = a.importance;
+                    bVal = b.importance;
+                }
+                
+                if (sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            renderTable();
+        }
+
+        function updateStats() {
+            document.getElementById('totalKeys').textContent = composeKeys.length;
+            document.getElementById('filteredKeys').textContent = filteredData.length;
+            document.getElementById('commonKeys').textContent = composeKeys.filter(k => k.common).length;
+            document.getElementById('requiredKeys').textContent = composeKeys.filter(k => k.required === 'required').length;
+        }
+
+        // イベントリスナー
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('importanceFilter').addEventListener('change', applyFilters);
+        document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+        document.getElementById('requiredFilter').addEventListener('change', applyFilters);
+
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => sortTable(th.dataset.sort));
+        });
+
+        // 初期レンダリング
+        renderTable();
+    </script>
+</body>
+</html>

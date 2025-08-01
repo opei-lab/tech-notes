@@ -1,0 +1,2607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dockerコマンド完全リファレンス</title>
+    <style>
+        :root {
+            --docker-blue: #0db7ed;
+            --docker-dark: #384d54;
+            --compose-purple: #5f4b8b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--docker-blue) 0%, var(--docker-dark) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .tab-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: rgba(13, 183, 237, 0.1);
+        }
+
+        .tab.active {
+            color: var(--docker-blue);
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--docker-blue);
+        }
+
+        .search-container {
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="search"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="search"]:focus {
+            outline: none;
+            border-color: var(--docker-blue);
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .quick-filter {
+            padding: 0.5rem 1rem;
+            background: #f3f4f6;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-filter:hover {
+            background: #e5e7eb;
+        }
+
+        .quick-filter.active {
+            background: var(--docker-blue);
+            color: white;
+            border-color: var(--docker-blue);
+        }
+
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .command-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .command-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--docker-blue);
+        }
+
+        .command-card.expanded {
+            grid-column: 1 / -1;
+            border-color: var(--docker-blue);
+        }
+
+        .command-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .command-name {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--docker-dark);
+        }
+
+        .command-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .type-docker {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .type-compose {
+            background: #e9d5ff;
+            color: #7c3aed;
+        }
+
+        .type-both {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .command-description {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .command-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.875rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .importance {
+            color: #fbbf24;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .command-details {
+            display: none;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .command-card.expanded .command-details {
+            display: block;
+        }
+
+        .example-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        code {
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .option-item {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .option-name {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--docker-dark);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .option-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .usage-hint {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .danger-hint {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .related-commands {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+
+        .related-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .related-list {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .related-link {
+            padding: 0.25rem 0.75rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--docker-blue);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .related-link:hover {
+            background: var(--docker-blue);
+            color: white;
+            border-color: var(--docker-blue);
+        }
+
+        .not-found {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .command-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Docker & Docker Compose コマンド完全ガイド</h1>
+            <p class="subtitle">実践的なコマンドリファレンス</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('all')">すべて</div>
+                <div class="tab" onclick="switchTab('docker')">Docker</div>
+                <div class="tab" onclick="switchTab('compose')">Docker Compose</div>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="search" id="searchInput" placeholder="コマンド名、説明、カテゴリで検索...">
+            </div>
+            <div class="filters">
+                <div class="filter-group">
+                    <span class="filter-label">カテゴリ:</span>
+                    <select id="categoryFilter">
+                        <option value="">すべて</option>
+                        <option value="basic">基本操作</option>
+                        <option value="image">イメージ管理</option>
+                        <option value="container">コンテナ管理</option>
+                        <option value="network">ネットワーク</option>
+                        <option value="volume">ボリューム</option>
+                        <option value="system">システム管理</option>
+                        <option value="registry">レジストリ</option>
+                        <option value="compose">Compose操作</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">使用頻度:</span>
+                    <select id="frequencyFilter">
+                        <option value="">すべて</option>
+                        <option value="high">よく使う</option>
+                        <option value="medium">時々使う</option>
+                        <option value="low">たまに使う</option>
+                    </select>
+                </div>
+            </div>
+            <div class="quick-filters">
+                <span class="quick-filter" onclick="setQuickFilter('beginner')">初心者向け</span>
+                <span class="quick-filter" onclick="setQuickFilter('troubleshoot')">トラブルシューティング</span>
+                <span class="quick-filter" onclick="setQuickFilter('cleanup')">クリーンアップ</span>
+                <span class="quick-filter" onclick="setQuickFilter('debug')">デバッグ</span>
+            </div>
+        </div>
+
+        <div class="command-grid" id="commandGrid">
+            <!-- コマンドカードはJavaScriptで動的生成 -->
+        </div>
+
+        <div class="not-found" id="notFound" style="display: none;">
+            <p>検索条件に一致するコマンドが見つかりませんでした。</p>
+        </div>
+    </div>
+
+    <script>
+        // Docker & Docker Compose コマンドの完全なデータ
+        const commands = [
+            // Docker 基本コマンド
+            {
+                command: 'docker run',
+                type: 'docker',
+                category: 'basic',
+                frequency: 'high',
+                description: '新しいコンテナを作成して実行',
+                tags: ['beginner', 'container'],
+                examples: [
+                    {
+                        code: 'docker run nginx',
+                        desc: '最新のnginxイメージでコンテナを実行'
+                    },
+                    {
+                        code: 'docker run -d -p 8080:80 --name web nginx',
+                        desc: 'バックグラウンドで実行、ポート転送、名前付き'
+                    },
+                    {
+                        code: 'docker run -it --rm ubuntu bash',
+                        desc: '対話的にUbuntuを実行、終了時に削除'
+                    },
+                    {
+                        code: 'docker run -v $(pwd):/app -w /app node:18 npm install',
+                        desc: '現在のディレクトリをマウントしてnpm install実行'
+                    }
+                ],
+                options: [
+                    { name: '-d, --detach', desc: 'バックグラウンドで実行' },
+                    { name: '-p, --publish', desc: 'ポートマッピング (host:container)' },
+                    { name: '-v, --volume', desc: 'ボリュームマウント' },
+                    { name: '--name', desc: 'コンテナ名を指定' },
+                    { name: '-e, --env', desc: '環境変数を設定' },
+                    { name: '-it', desc: '対話的な端末を割り当て' },
+                    { name: '--rm', desc: '終了時にコンテナを削除' },
+                    { name: '--network', desc: 'ネットワークを指定' },
+                    { name: '--restart', desc: '再起動ポリシー' },
+                    { name: '-u, --user', desc: '実行ユーザーを指定' },
+                    { name: '-w, --workdir', desc: '作業ディレクトリ' },
+                    { name: '--memory', desc: 'メモリ制限' },
+                    { name: '--cpus', desc: 'CPU制限' }
+                ],
+                related: ['docker exec', 'docker start', 'docker stop'],
+                hints: [
+                    { type: 'usage', text: '-dオプションでバックグラウンド実行、-itで対話的実行を使い分ける' },
+                    { type: 'usage', text: '--rmオプションで一時的なコンテナを作成すると後片付けが不要' }
+                ]
+            },
+            {
+                command: 'docker ps',
+                type: 'docker',
+                category: 'container',
+                frequency: 'high',
+                description: 'コンテナ一覧を表示',
+                tags: ['beginner', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker ps',
+                        desc: '実行中のコンテナを表示'
+                    },
+                    {
+                        code: 'docker ps -a',
+                        desc: 'すべてのコンテナを表示（停止中も含む）'
+                    },
+                    {
+                        code: 'docker ps -q',
+                        desc: 'コンテナIDのみを表示'
+                    },
+                    {
+                        code: 'docker ps --filter "status=exited"',
+                        desc: '終了したコンテナのみ表示'
+                    },
+                    {
+                        code: 'docker ps --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"',
+                        desc: 'カスタムフォーマットで表示'
+                    }
+                ],
+                options: [
+                    { name: '-a, --all', desc: 'すべてのコンテナを表示' },
+                    { name: '-q, --quiet', desc: 'IDのみ表示' },
+                    { name: '-l, --latest', desc: '最新のコンテナを表示' },
+                    { name: '-n', desc: '最新n個のコンテナを表示' },
+                    { name: '--filter', desc: 'フィルタリング条件' },
+                    { name: '--format', desc: '出力フォーマット指定' },
+                    { name: '--no-trunc', desc: '完全な値を表示' },
+                    { name: '-s, --size', desc: 'ファイルサイズを表示' }
+                ],
+                related: ['docker container ls', 'docker inspect'],
+                hints: [
+                    { type: 'usage', text: 'docker ps -aqで全コンテナIDの取得が可能（一括操作に便利）' }
+                ]
+            },
+            {
+                command: 'docker images',
+                type: 'docker',
+                category: 'image',
+                frequency: 'high',
+                description: 'ローカルのイメージ一覧を表示',
+                tags: ['beginner', 'cleanup'],
+                examples: [
+                    {
+                        code: 'docker images',
+                        desc: 'すべてのイメージを表示'
+                    },
+                    {
+                        code: 'docker images -q',
+                        desc: 'イメージIDのみ表示'
+                    },
+                    {
+                        code: 'docker images --filter "dangling=true"',
+                        desc: 'タグなしイメージを表示'
+                    },
+                    {
+                        code: 'docker images --format "table {{.Repository}}:{{.Tag}}\\t{{.Size}}"',
+                        desc: 'リポジトリ名とサイズを表形式で表示'
+                    }
+                ],
+                options: [
+                    { name: '-a, --all', desc: '中間イメージも表示' },
+                    { name: '-q, --quiet', desc: 'IDのみ表示' },
+                    { name: '--filter', desc: 'フィルタリング' },
+                    { name: '--format', desc: 'フォーマット指定' },
+                    { name: '--digests', desc: 'ダイジェストを表示' },
+                    { name: '--no-trunc', desc: '完全な値を表示' }
+                ],
+                related: ['docker image ls', 'docker rmi', 'docker pull'],
+                hints: [
+                    { type: 'usage', text: 'docker images -f "dangling=true" -qで不要なイメージIDを取得できる' }
+                ]
+            },
+            {
+                command: 'docker build',
+                type: 'docker',
+                category: 'image',
+                frequency: 'high',
+                description: 'Dockerfileからイメージをビルド',
+                tags: ['beginner'],
+                examples: [
+                    {
+                        code: 'docker build -t myapp .',
+                        desc: '現在のディレクトリでビルド、タグ付け'
+                    },
+                    {
+                        code: 'docker build -t myapp:v1.0 -f Dockerfile.prod .',
+                        desc: '特定のDockerfileを使用してビルド'
+                    },
+                    {
+                        code: 'docker build --build-arg NODE_ENV=production -t myapp .',
+                        desc: 'ビルド引数を渡してビルド'
+                    },
+                    {
+                        code: 'docker build --no-cache -t myapp .',
+                        desc: 'キャッシュを使わずにビルド'
+                    },
+                    {
+                        code: 'docker build --target production -t myapp .',
+                        desc: 'マルチステージビルドの特定ステージまでビルド'
+                    }
+                ],
+                options: [
+                    { name: '-t, --tag', desc: 'イメージにタグを付ける' },
+                    { name: '-f, --file', desc: 'Dockerfileを指定' },
+                    { name: '--build-arg', desc: 'ビルド時の引数' },
+                    { name: '--no-cache', desc: 'キャッシュを使用しない' },
+                    { name: '--target', desc: 'マルチステージビルドのターゲット' },
+                    { name: '--platform', desc: 'プラットフォーム指定' },
+                    { name: '--progress', desc: '進捗表示形式' },
+                    { name: '--pull', desc: '常に最新のベースイメージを取得' }
+                ],
+                related: ['docker push', 'docker tag', 'docker buildx'],
+                hints: [
+                    { type: 'usage', text: '.dockerignoreファイルで不要なファイルを除外してビルドを高速化' },
+                    { type: 'usage', text: '--progressオプションでビルド進捗の詳細を確認可能' }
+                ]
+            },
+            {
+                command: 'docker exec',
+                type: 'docker',
+                category: 'container',
+                frequency: 'high',
+                description: '実行中のコンテナでコマンドを実行',
+                tags: ['debug', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker exec -it container_name bash',
+                        desc: 'コンテナに対話的にbashで接続'
+                    },
+                    {
+                        code: 'docker exec container_name ls -la /app',
+                        desc: 'コンテナ内でコマンドを実行'
+                    },
+                    {
+                        code: 'docker exec -u root container_name apt update',
+                        desc: 'rootユーザーとしてコマンド実行'
+                    },
+                    {
+                        code: 'docker exec -e NODE_ENV=test container_name npm test',
+                        desc: '環境変数を設定してコマンド実行'
+                    }
+                ],
+                options: [
+                    { name: '-i, --interactive', desc: '標準入力を開いたまま' },
+                    { name: '-t, --tty', desc: '疑似TTYを割り当て' },
+                    { name: '-d, --detach', desc: 'バックグラウンドで実行' },
+                    { name: '-u, --user', desc: 'ユーザーを指定' },
+                    { name: '-e, --env', desc: '環境変数を設定' },
+                    { name: '-w, --workdir', desc: '作業ディレクトリ' }
+                ],
+                related: ['docker run', 'docker attach', 'docker logs'],
+                hints: [
+                    { type: 'usage', text: 'docker exec -it は対話的なデバッグに最適' },
+                    { type: 'usage', text: 'コンテナ内のファイル確認やプロセス確認に便利' }
+                ]
+            },
+            {
+                command: 'docker stop',
+                type: 'docker',
+                category: 'container',
+                frequency: 'high',
+                description: 'コンテナを停止',
+                tags: ['beginner'],
+                examples: [
+                    {
+                        code: 'docker stop container_name',
+                        desc: '指定したコンテナを停止'
+                    },
+                    {
+                        code: 'docker stop -t 30 container_name',
+                        desc: '30秒の猶予を与えて停止'
+                    },
+                    {
+                        code: 'docker stop $(docker ps -q)',
+                        desc: 'すべての実行中コンテナを停止'
+                    }
+                ],
+                options: [
+                    { name: '-t, --time', desc: '停止までの待機時間（秒）' }
+                ],
+                related: ['docker start', 'docker restart', 'docker kill'],
+                hints: [
+                    { type: 'usage', text: 'デフォルトは10秒待機してからSIGKILL送信' }
+                ]
+            },
+            {
+                command: 'docker start',
+                type: 'docker',
+                category: 'container',
+                frequency: 'high',
+                description: '停止中のコンテナを開始',
+                tags: ['beginner'],
+                examples: [
+                    {
+                        code: 'docker start container_name',
+                        desc: '停止中のコンテナを開始'
+                    },
+                    {
+                        code: 'docker start -a container_name',
+                        desc: 'コンテナを開始して出力を表示'
+                    },
+                    {
+                        code: 'docker start -i container_name',
+                        desc: '対話的にコンテナを開始'
+                    }
+                ],
+                options: [
+                    { name: '-a, --attach', desc: 'STDOUT/STDERRにアタッチ' },
+                    { name: '-i, --interactive', desc: 'STDINをアタッチ' }
+                ],
+                related: ['docker stop', 'docker restart', 'docker run'],
+                hints: [
+                    { type: 'usage', text: 'docker startは既存のコンテナの再開に使用' }
+                ]
+            },
+            {
+                command: 'docker rm',
+                type: 'docker',
+                category: 'container',
+                frequency: 'high',
+                description: 'コンテナを削除',
+                tags: ['cleanup'],
+                examples: [
+                    {
+                        code: 'docker rm container_name',
+                        desc: '停止中のコンテナを削除'
+                    },
+                    {
+                        code: 'docker rm -f container_name',
+                        desc: '実行中のコンテナを強制削除'
+                    },
+                    {
+                        code: 'docker rm $(docker ps -aq)',
+                        desc: 'すべてのコンテナを削除'
+                    },
+                    {
+                        code: 'docker rm -v container_name',
+                        desc: 'コンテナと関連ボリュームを削除'
+                    }
+                ],
+                options: [
+                    { name: '-f, --force', desc: '実行中でも強制削除' },
+                    { name: '-v, --volumes', desc: '関連する匿名ボリュームも削除' },
+                    { name: '-l, --link', desc: 'リンクを削除' }
+                ],
+                related: ['docker rmi', 'docker prune', 'docker stop'],
+                hints: [
+                    { type: 'usage', text: 'docker container pruneで停止中の全コンテナを一括削除可能' }
+                ]
+            },
+            {
+                command: 'docker rmi',
+                type: 'docker',
+                category: 'image',
+                frequency: 'high',
+                description: 'イメージを削除',
+                tags: ['cleanup'],
+                examples: [
+                    {
+                        code: 'docker rmi image_name',
+                        desc: 'イメージを削除'
+                    },
+                    {
+                        code: 'docker rmi -f image_name',
+                        desc: 'イメージを強制削除'
+                    },
+                    {
+                        code: 'docker rmi $(docker images -q)',
+                        desc: 'すべてのイメージを削除'
+                    },
+                    {
+                        code: 'docker rmi $(docker images -f "dangling=true" -q)',
+                        desc: 'タグなしイメージを削除'
+                    }
+                ],
+                options: [
+                    { name: '-f, --force', desc: '強制削除' },
+                    { name: '--no-prune', desc: 'タグなしの親イメージを削除しない' }
+                ],
+                related: ['docker images', 'docker image prune', 'docker rm'],
+                hints: [
+                    { type: 'usage', text: 'docker image pruneで不要なイメージを一括削除可能' }
+                ]
+            },
+            {
+                command: 'docker logs',
+                type: 'docker',
+                category: 'container',
+                frequency: 'high',
+                description: 'コンテナのログを表示',
+                tags: ['debug', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker logs container_name',
+                        desc: 'コンテナのログを表示'
+                    },
+                    {
+                        code: 'docker logs -f container_name',
+                        desc: 'ログをリアルタイムで追跡'
+                    },
+                    {
+                        code: 'docker logs --tail 100 container_name',
+                        desc: '最新100行のログを表示'
+                    },
+                    {
+                        code: 'docker logs --since 30m container_name',
+                        desc: '過去30分のログを表示'
+                    },
+                    {
+                        code: 'docker logs -t container_name',
+                        desc: 'タイムスタンプ付きでログ表示'
+                    }
+                ],
+                options: [
+                    { name: '-f, --follow', desc: 'ログを追跡' },
+                    { name: '--tail', desc: '表示する行数' },
+                    { name: '--since', desc: '指定時刻以降のログ' },
+                    { name: '--until', desc: '指定時刻までのログ' },
+                    { name: '-t, --timestamps', desc: 'タイムスタンプ表示' },
+                    { name: '--details', desc: '詳細情報を表示' }
+                ],
+                related: ['docker exec', 'docker attach', 'docker events'],
+                hints: [
+                    { type: 'usage', text: 'docker logs -f --tail 0でリアルタイムログのみ表示' },
+                    { type: 'usage', text: '--sinceと--untilで時間範囲を指定してログ抽出' }
+                ]
+            },
+            {
+                command: 'docker pull',
+                type: 'docker',
+                category: 'image',
+                frequency: 'high',
+                description: 'レジストリからイメージを取得',
+                tags: ['beginner'],
+                examples: [
+                    {
+                        code: 'docker pull nginx',
+                        desc: '最新のnginxイメージを取得'
+                    },
+                    {
+                        code: 'docker pull nginx:1.23',
+                        desc: '特定バージョンを取得'
+                    },
+                    {
+                        code: 'docker pull myregistry.com/myapp:latest',
+                        desc: 'プライベートレジストリから取得'
+                    },
+                    {
+                        code: 'docker pull --platform linux/arm64 nginx',
+                        desc: '特定プラットフォーム用イメージを取得'
+                    }
+                ],
+                options: [
+                    { name: '-a, --all-tags', desc: 'すべてのタグを取得' },
+                    { name: '--platform', desc: 'プラットフォーム指定' },
+                    { name: '-q, --quiet', desc: '詳細出力を抑制' },
+                    { name: '--disable-content-trust', desc: '署名検証を無効化' }
+                ],
+                related: ['docker push', 'docker images', 'docker run'],
+                hints: [
+                    { type: 'usage', text: 'タグを指定しない場合は:latestが使用される' }
+                ]
+            },
+            {
+                command: 'docker push',
+                type: 'docker',
+                category: 'registry',
+                frequency: 'medium',
+                description: 'イメージをレジストリにプッシュ',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker push myregistry.com/myapp:v1.0',
+                        desc: 'イメージをレジストリにプッシュ'
+                    },
+                    {
+                        code: 'docker push myregistry.com/myapp:latest',
+                        desc: '最新タグでプッシュ'
+                    },
+                    {
+                        code: 'docker push -a myregistry.com/myapp',
+                        desc: 'すべてのタグをプッシュ'
+                    }
+                ],
+                options: [
+                    { name: '-a, --all-tags', desc: 'すべてのタグをプッシュ' },
+                    { name: '--disable-content-trust', desc: '署名を無効化' },
+                    { name: '-q, --quiet', desc: '詳細出力を抑制' }
+                ],
+                related: ['docker pull', 'docker tag', 'docker login'],
+                hints: [
+                    { type: 'usage', text: 'docker loginでレジストリへの認証が必要' },
+                    { type: 'usage', text: 'docker tagでイメージ名を変更してからプッシュ' }
+                ]
+            },
+            {
+                command: 'docker tag',
+                type: 'docker',
+                category: 'image',
+                frequency: 'medium',
+                description: 'イメージにタグを付ける',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker tag myapp myregistry.com/myapp:v1.0',
+                        desc: 'イメージに新しいタグを付ける'
+                    },
+                    {
+                        code: 'docker tag nginx:latest mynginx:custom',
+                        desc: '既存イメージを別名でタグ付け'
+                    }
+                ],
+                options: [],
+                related: ['docker push', 'docker images', 'docker build'],
+                hints: [
+                    { type: 'usage', text: 'タグ付けはイメージの複製ではなく別名を付けるだけ' }
+                ]
+            },
+            {
+                command: 'docker network',
+                type: 'docker',
+                category: 'network',
+                frequency: 'medium',
+                description: 'ネットワークを管理',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker network ls',
+                        desc: 'ネットワーク一覧を表示'
+                    },
+                    {
+                        code: 'docker network create mynetwork',
+                        desc: '新しいネットワークを作成'
+                    },
+                    {
+                        code: 'docker network create --driver bridge --subnet 172.20.0.0/16 mynetwork',
+                        desc: 'サブネット指定でネットワーク作成'
+                    },
+                    {
+                        code: 'docker network connect mynetwork container_name',
+                        desc: 'コンテナをネットワークに接続'
+                    },
+                    {
+                        code: 'docker network inspect mynetwork',
+                        desc: 'ネットワークの詳細情報を表示'
+                    }
+                ],
+                options: [
+                    { name: 'ls', desc: 'ネットワーク一覧表示' },
+                    { name: 'create', desc: 'ネットワーク作成' },
+                    { name: 'rm', desc: 'ネットワーク削除' },
+                    { name: 'connect', desc: 'コンテナを接続' },
+                    { name: 'disconnect', desc: 'コンテナを切断' },
+                    { name: 'inspect', desc: '詳細情報表示' },
+                    { name: 'prune', desc: '未使用ネットワーク削除' }
+                ],
+                related: ['docker run --network', 'docker-compose networks'],
+                hints: [
+                    { type: 'usage', text: 'カスタムネットワークでコンテナ間通信を分離・管理' },
+                    { type: 'usage', text: 'bridgeネットワークがデフォルトで使用される' }
+                ]
+            },
+            {
+                command: 'docker volume',
+                type: 'docker',
+                category: 'volume',
+                frequency: 'medium',
+                description: 'ボリュームを管理',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker volume ls',
+                        desc: 'ボリューム一覧を表示'
+                    },
+                    {
+                        code: 'docker volume create myvolume',
+                        desc: '新しいボリュームを作成'
+                    },
+                    {
+                        code: 'docker volume inspect myvolume',
+                        desc: 'ボリュームの詳細情報を表示'
+                    },
+                    {
+                        code: 'docker volume rm myvolume',
+                        desc: 'ボリュームを削除'
+                    },
+                    {
+                        code: 'docker volume prune',
+                        desc: '未使用ボリュームを削除'
+                    }
+                ],
+                options: [
+                    { name: 'ls', desc: 'ボリューム一覧表示' },
+                    { name: 'create', desc: 'ボリューム作成' },
+                    { name: 'rm', desc: 'ボリューム削除' },
+                    { name: 'inspect', desc: '詳細情報表示' },
+                    { name: 'prune', desc: '未使用ボリューム削除' }
+                ],
+                related: ['docker run -v', 'docker-compose volumes'],
+                hints: [
+                    { type: 'usage', text: '名前付きボリュームでデータの永続化と共有が可能' },
+                    { type: 'usage', text: 'docker volume pruneで定期的にクリーンアップ' }
+                ]
+            },
+            {
+                command: 'docker inspect',
+                type: 'docker',
+                category: 'system',
+                frequency: 'medium',
+                description: 'オブジェクトの詳細情報を表示',
+                tags: ['debug', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker inspect container_name',
+                        desc: 'コンテナの詳細情報を表示'
+                    },
+                    {
+                        code: 'docker inspect -f \'{{.NetworkSettings.IPAddress}}\' container_name',
+                        desc: 'コンテナのIPアドレスを取得'
+                    },
+                    {
+                        code: 'docker inspect --type image nginx',
+                        desc: 'イメージの詳細情報を表示'
+                    },
+                    {
+                        code: 'docker inspect -f \'{{json .Mounts}}\' container_name | jq',
+                        desc: 'マウント情報をJSON形式で表示'
+                    }
+                ],
+                options: [
+                    { name: '-f, --format', desc: 'Go templateで出力形式指定' },
+                    { name: '--type', desc: 'オブジェクトタイプ指定' },
+                    { name: '-s, --size', desc: 'サイズ情報を含める' }
+                ],
+                related: ['docker ps', 'docker images', 'docker network inspect'],
+                hints: [
+                    { type: 'usage', text: 'Go templateで必要な情報だけを抽出可能' },
+                    { type: 'usage', text: 'jqと組み合わせてJSON処理が便利' }
+                ]
+            },
+            {
+                command: 'docker system',
+                type: 'docker',
+                category: 'system',
+                frequency: 'medium',
+                description: 'Docker システムを管理',
+                tags: ['cleanup', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker system df',
+                        desc: 'ディスク使用量を表示'
+                    },
+                    {
+                        code: 'docker system prune',
+                        desc: '未使用オブジェクトを削除'
+                    },
+                    {
+                        code: 'docker system prune -a --volumes',
+                        desc: 'すべての未使用リソースを削除'
+                    },
+                    {
+                        code: 'docker system info',
+                        desc: 'システム情報を表示'
+                    },
+                    {
+                        code: 'docker system events',
+                        desc: 'リアルタイムイベントを表示'
+                    }
+                ],
+                options: [
+                    { name: 'df', desc: 'ディスク使用量表示' },
+                    { name: 'prune', desc: '未使用リソース削除' },
+                    { name: 'info', desc: 'システム情報表示' },
+                    { name: 'events', desc: 'イベント監視' }
+                ],
+                related: ['docker prune', 'docker info'],
+                hints: [
+                    { type: 'usage', text: 'docker system pruneで定期的にクリーンアップ' },
+                    { type: 'danger', text: '-aオプションは使用中でないすべてのイメージも削除' }
+                ]
+            },
+            {
+                command: 'docker stats',
+                type: 'docker',
+                category: 'system',
+                frequency: 'medium',
+                description: 'コンテナのリソース使用状況を表示',
+                tags: ['troubleshoot', 'debug'],
+                examples: [
+                    {
+                        code: 'docker stats',
+                        desc: 'すべてのコンテナの統計を表示'
+                    },
+                    {
+                        code: 'docker stats container_name',
+                        desc: '特定コンテナの統計を表示'
+                    },
+                    {
+                        code: 'docker stats --no-stream',
+                        desc: '一度だけ統計を表示'
+                    },
+                    {
+                        code: 'docker stats --format "table {{.Container}}\\t{{.CPUPerc}}\\t{{.MemUsage}}"',
+                        desc: 'カスタムフォーマットで表示'
+                    }
+                ],
+                options: [
+                    { name: '--all', desc: '停止中のコンテナも表示' },
+                    { name: '--no-stream', desc: '継続的な更新を無効化' },
+                    { name: '--no-trunc', desc: '完全な値を表示' },
+                    { name: '--format', desc: '出力フォーマット指定' }
+                ],
+                related: ['docker top', 'docker ps'],
+                hints: [
+                    { type: 'usage', text: 'リソース使用状況のモニタリングに使用' }
+                ]
+            },
+            {
+                command: 'docker cp',
+                type: 'docker',
+                category: 'container',
+                frequency: 'medium',
+                description: 'コンテナとホスト間でファイルをコピー',
+                tags: ['debug'],
+                examples: [
+                    {
+                        code: 'docker cp container_name:/app/config.json .',
+                        desc: 'コンテナからホストにファイルをコピー'
+                    },
+                    {
+                        code: 'docker cp ./config.json container_name:/app/',
+                        desc: 'ホストからコンテナにファイルをコピー'
+                    },
+                    {
+                        code: 'docker cp container_name:/logs/ ./backup/',
+                        desc: 'ディレクトリ全体をコピー'
+                    }
+                ],
+                options: [
+                    { name: '-a, --archive', desc: '所有者情報を保持' },
+                    { name: '-L, --follow-link', desc: 'シンボリックリンクを追跡' }
+                ],
+                related: ['docker exec', 'docker volume'],
+                hints: [
+                    { type: 'usage', text: 'コンテナが実行中でも停止中でもコピー可能' }
+                ]
+            },
+            {
+                command: 'docker commit',
+                type: 'docker',
+                category: 'image',
+                frequency: 'low',
+                description: 'コンテナから新しいイメージを作成',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker commit container_name myimage:v1',
+                        desc: 'コンテナの現在の状態をイメージとして保存'
+                    },
+                    {
+                        code: 'docker commit -m "Added config" container_name myimage:v1',
+                        desc: 'コミットメッセージ付きで保存'
+                    }
+                ],
+                options: [
+                    { name: '-a, --author', desc: '作成者を指定' },
+                    { name: '-m, --message', desc: 'コミットメッセージ' },
+                    { name: '-p, --pause', desc: 'コミット中にコンテナを一時停止' }
+                ],
+                related: ['docker build', 'docker save'],
+                hints: [
+                    { type: 'usage', text: '通常はDockerfileを使用することが推奨される' },
+                    { type: 'danger', text: 'セキュリティや再現性の観点からDockerfileの使用を推奨' }
+                ]
+            },
+            {
+                command: 'docker save',
+                type: 'docker',
+                category: 'image',
+                frequency: 'low',
+                description: 'イメージをtarアーカイブとして保存',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker save -o myimage.tar myimage:latest',
+                        desc: 'イメージをファイルに保存'
+                    },
+                    {
+                        code: 'docker save myimage:latest | gzip > myimage.tar.gz',
+                        desc: '圧縮して保存'
+                    }
+                ],
+                options: [
+                    { name: '-o, --output', desc: '出力ファイル名' }
+                ],
+                related: ['docker load', 'docker export'],
+                hints: [
+                    { type: 'usage', text: 'オフライン環境へのイメージ転送に使用' }
+                ]
+            },
+            {
+                command: 'docker load',
+                type: 'docker',
+                category: 'image',
+                frequency: 'low',
+                description: 'tarアーカイブからイメージを読み込み',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker load -i myimage.tar',
+                        desc: 'ファイルからイメージを読み込み'
+                    },
+                    {
+                        code: 'docker load < myimage.tar',
+                        desc: '標準入力から読み込み'
+                    }
+                ],
+                options: [
+                    { name: '-i, --input', desc: '入力ファイル名' },
+                    { name: '-q, --quiet', desc: '詳細出力を抑制' }
+                ],
+                related: ['docker save', 'docker import'],
+                hints: [
+                    { type: 'usage', text: 'docker saveで保存したイメージの復元に使用' }
+                ]
+            },
+            {
+                command: 'docker history',
+                type: 'docker',
+                category: 'image',
+                frequency: 'low',
+                description: 'イメージの履歴を表示',
+                tags: ['debug'],
+                examples: [
+                    {
+                        code: 'docker history nginx',
+                        desc: 'イメージのレイヤー履歴を表示'
+                    },
+                    {
+                        code: 'docker history --no-trunc nginx',
+                        desc: '完全なコマンドを表示'
+                    },
+                    {
+                        code: 'docker history -q nginx',
+                        desc: 'イメージIDのみ表示'
+                    }
+                ],
+                options: [
+                    { name: '-H, --human', desc: '人間が読みやすい形式' },
+                    { name: '--no-trunc', desc: '完全な出力' },
+                    { name: '-q, --quiet', desc: 'IDのみ表示' }
+                ],
+                related: ['docker inspect', 'docker images'],
+                hints: [
+                    { type: 'usage', text: 'イメージのビルド過程を確認できる' }
+                ]
+            },
+            {
+                command: 'docker login',
+                type: 'docker',
+                category: 'registry',
+                frequency: 'medium',
+                description: 'レジストリにログイン',
+                tags: ['beginner'],
+                examples: [
+                    {
+                        code: 'docker login',
+                        desc: 'Docker Hubにログイン'
+                    },
+                    {
+                        code: 'docker login myregistry.com',
+                        desc: 'プライベートレジストリにログイン'
+                    },
+                    {
+                        code: 'docker login -u username -p password myregistry.com',
+                        desc: 'ユーザー名とパスワードでログイン'
+                    },
+                    {
+                        code: 'echo $PASSWORD | docker login -u username --password-stdin',
+                        desc: 'パスワードを標準入力から読み込み'
+                    }
+                ],
+                options: [
+                    { name: '-u, --username', desc: 'ユーザー名' },
+                    { name: '-p, --password', desc: 'パスワード' },
+                    { name: '--password-stdin', desc: '標準入力からパスワード読み込み' }
+                ],
+                related: ['docker logout', 'docker push', 'docker pull'],
+                hints: [
+                    { type: 'usage', text: '--password-stdinオプションでセキュアにパスワード入力' },
+                    { type: 'danger', text: 'コマンドラインでのパスワード指定は履歴に残るため避ける' }
+                ]
+            },
+            {
+                command: 'docker logout',
+                type: 'docker',
+                category: 'registry',
+                frequency: 'low',
+                description: 'レジストリからログアウト',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker logout',
+                        desc: 'Docker Hubからログアウト'
+                    },
+                    {
+                        code: 'docker logout myregistry.com',
+                        desc: '指定レジストリからログアウト'
+                    }
+                ],
+                options: [],
+                related: ['docker login'],
+                hints: [
+                    { type: 'usage', text: '認証情報を削除してセキュリティを確保' }
+                ]
+            },
+            {
+                command: 'docker search',
+                type: 'docker',
+                category: 'registry',
+                frequency: 'low',
+                description: 'Docker Hubでイメージを検索',
+                tags: ['beginner'],
+                examples: [
+                    {
+                        code: 'docker search nginx',
+                        desc: 'nginxイメージを検索'
+                    },
+                    {
+                        code: 'docker search --filter stars=100 nginx',
+                        desc: 'スター100以上のnginxイメージを検索'
+                    },
+                    {
+                        code: 'docker search --filter is-official=true nginx',
+                        desc: '公式イメージのみ検索'
+                    }
+                ],
+                options: [
+                    { name: '--filter', desc: 'フィルタリング条件' },
+                    { name: '--limit', desc: '結果の最大数' },
+                    { name: '--no-trunc', desc: '完全な説明を表示' }
+                ],
+                related: ['docker pull', 'docker images'],
+                hints: [
+                    { type: 'usage', text: 'Docker Hub上の公開イメージのみ検索可能' }
+                ]
+            },
+            {
+                command: 'docker attach',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: '実行中のコンテナにアタッチ',
+                tags: ['debug'],
+                examples: [
+                    {
+                        code: 'docker attach container_name',
+                        desc: 'コンテナの標準入出力にアタッチ'
+                    },
+                    {
+                        code: 'docker attach --no-stdin container_name',
+                        desc: '標準入力を転送せずにアタッチ'
+                    }
+                ],
+                options: [
+                    { name: '--detach-keys', desc: 'デタッチキーシーケンス' },
+                    { name: '--no-stdin', desc: '標準入力を転送しない' },
+                    { name: '--sig-proxy', desc: 'シグナルをプロキシする' }
+                ],
+                related: ['docker exec', 'docker logs'],
+                hints: [
+                    { type: 'usage', text: 'Ctrl+P, Ctrl+Qでデタッチ可能' },
+                    { type: 'danger', text: 'exitで抜けるとコンテナが停止する場合がある' }
+                ]
+            },
+            {
+                command: 'docker wait',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナが停止するまで待機',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker wait container_name',
+                        desc: 'コンテナが終了するまで待機して終了コードを表示'
+                    }
+                ],
+                options: [],
+                related: ['docker run', 'docker stop'],
+                hints: [
+                    { type: 'usage', text: 'スクリプトでコンテナの終了を待つ場合に使用' }
+                ]
+            },
+            {
+                command: 'docker port',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナのポートマッピングを表示',
+                tags: ['troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker port container_name',
+                        desc: 'すべてのポートマッピングを表示'
+                    },
+                    {
+                        code: 'docker port container_name 80',
+                        desc: '特定ポートのマッピングを表示'
+                    }
+                ],
+                options: [],
+                related: ['docker ps', 'docker inspect'],
+                hints: [
+                    { type: 'usage', text: 'docker psでも確認可能だが、これは特定用途向け' }
+                ]
+            },
+            {
+                command: 'docker top',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナ内のプロセスを表示',
+                tags: ['debug', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker top container_name',
+                        desc: 'コンテナ内で実行中のプロセスを表示'
+                    },
+                    {
+                        code: 'docker top container_name -aux',
+                        desc: 'psコマンドオプションを使用'
+                    }
+                ],
+                options: [],
+                related: ['docker exec', 'docker stats'],
+                hints: [
+                    { type: 'usage', text: 'ホストから見たプロセス情報を表示' }
+                ]
+            },
+            {
+                command: 'docker diff',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナのファイルシステム変更を表示',
+                tags: ['debug'],
+                examples: [
+                    {
+                        code: 'docker diff container_name',
+                        desc: 'コンテナ内のファイル変更を表示'
+                    }
+                ],
+                options: [],
+                related: ['docker commit', 'docker exec'],
+                hints: [
+                    { type: 'usage', text: 'A=追加、D=削除、C=変更を表示' }
+                ]
+            },
+            {
+                command: 'docker events',
+                type: 'docker',
+                category: 'system',
+                frequency: 'low',
+                description: 'Dockerイベントをリアルタイム表示',
+                tags: ['debug', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker events',
+                        desc: 'リアルタイムでイベントを表示'
+                    },
+                    {
+                        code: 'docker events --since 1h',
+                        desc: '過去1時間のイベントを表示'
+                    },
+                    {
+                        code: 'docker events --filter event=start',
+                        desc: '開始イベントのみ表示'
+                    }
+                ],
+                options: [
+                    { name: '--since', desc: '開始時刻' },
+                    { name: '--until', desc: '終了時刻' },
+                    { name: '--filter', desc: 'イベントフィルター' },
+                    { name: '--format', desc: '出力フォーマット' }
+                ],
+                related: ['docker logs', 'docker system events'],
+                hints: [
+                    { type: 'usage', text: 'デバッグやモニタリングに有用' }
+                ]
+            },
+            {
+                command: 'docker pause',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナを一時停止',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker pause container_name',
+                        desc: 'コンテナのプロセスを一時停止'
+                    }
+                ],
+                options: [],
+                related: ['docker unpause', 'docker stop'],
+                hints: [
+                    { type: 'usage', text: 'cgroupのfreezer機能を使用してプロセスを凍結' }
+                ]
+            },
+            {
+                command: 'docker unpause',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: '一時停止したコンテナを再開',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker unpause container_name',
+                        desc: '一時停止したコンテナを再開'
+                    }
+                ],
+                options: [],
+                related: ['docker pause', 'docker start'],
+                hints: [
+                    { type: 'usage', text: 'pauseで停止したコンテナのみ再開可能' }
+                ]
+            },
+            {
+                command: 'docker rename',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナの名前を変更',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker rename old_name new_name',
+                        desc: 'コンテナ名を変更'
+                    }
+                ],
+                options: [],
+                related: ['docker run --name', 'docker ps'],
+                hints: [
+                    { type: 'usage', text: '実行中のコンテナでも名前変更可能' }
+                ]
+            },
+            {
+                command: 'docker update',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナの設定を更新',
+                tags: [],
+                examples: [
+                    {
+                        code: 'docker update --memory 512m container_name',
+                        desc: 'メモリ制限を更新'
+                    },
+                    {
+                        code: 'docker update --cpus 2 container_name',
+                        desc: 'CPU制限を更新'
+                    },
+                    {
+                        code: 'docker update --restart always container_name',
+                        desc: '再起動ポリシーを更新'
+                    }
+                ],
+                options: [
+                    { name: '--memory', desc: 'メモリ制限' },
+                    { name: '--cpus', desc: 'CPU数制限' },
+                    { name: '--restart', desc: '再起動ポリシー' },
+                    { name: '--cpu-shares', desc: 'CPU共有の重み' }
+                ],
+                related: ['docker run', 'docker restart'],
+                hints: [
+                    { type: 'usage', text: '実行中のコンテナのリソース制限を動的に変更' }
+                ]
+            },
+            {
+                command: 'docker kill',
+                type: 'docker',
+                category: 'container',
+                frequency: 'low',
+                description: 'コンテナを強制終了',
+                tags: ['troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker kill container_name',
+                        desc: 'コンテナにSIGKILLを送信'
+                    },
+                    {
+                        code: 'docker kill -s SIGTERM container_name',
+                        desc: '指定したシグナルを送信'
+                    }
+                ],
+                options: [
+                    { name: '-s, --signal', desc: '送信するシグナル' }
+                ],
+                related: ['docker stop', 'docker rm -f'],
+                hints: [
+                    { type: 'danger', text: 'データ損失の可能性があるため、通常はdocker stopを推奨' }
+                ]
+            },
+
+            // Docker Compose コマンド
+            {
+                command: 'docker-compose up',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'high',
+                description: 'サービスを作成して起動',
+                tags: ['beginner', 'compose'],
+                examples: [
+                    {
+                        code: 'docker-compose up',
+                        desc: 'すべてのサービスを起動'
+                    },
+                    {
+                        code: 'docker-compose up -d',
+                        desc: 'バックグラウンドで起動'
+                    },
+                    {
+                        code: 'docker-compose up --build',
+                        desc: 'イメージをビルドしてから起動'
+                    },
+                    {
+                        code: 'docker-compose up -d --scale web=3',
+                        desc: 'webサービスを3つのインスタンスで起動'
+                    }
+                ],
+                options: [
+                    { name: '-d, --detach', desc: 'バックグラウンドで実行' },
+                    { name: '--build', desc: 'イメージをビルド' },
+                    { name: '--scale', desc: 'サービスのインスタンス数' },
+                    { name: '--force-recreate', desc: 'コンテナを強制再作成' },
+                    { name: '--no-deps', desc: '依存サービスを起動しない' },
+                    { name: '--no-recreate', desc: '既存コンテナを再作成しない' },
+                    { name: '--remove-orphans', desc: '孤立コンテナを削除' }
+                ],
+                related: ['docker-compose down', 'docker-compose start'],
+                hints: [
+                    { type: 'usage', text: 'docker-compose up -dが最も一般的な使用方法' },
+                    { type: 'usage', text: '--buildオプションでコード変更を反映' }
+                ]
+            },
+            {
+                command: 'docker-compose down',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'high',
+                description: 'サービスを停止して削除',
+                tags: ['beginner', 'compose', 'cleanup'],
+                examples: [
+                    {
+                        code: 'docker-compose down',
+                        desc: 'コンテナとネットワークを削除'
+                    },
+                    {
+                        code: 'docker-compose down -v',
+                        desc: 'ボリュームも含めて削除'
+                    },
+                    {
+                        code: 'docker-compose down --rmi all',
+                        desc: '使用したイメージも削除'
+                    }
+                ],
+                options: [
+                    { name: '-v, --volumes', desc: '名前付きボリュームを削除' },
+                    { name: '--rmi', desc: 'イメージを削除 (all/local)' },
+                    { name: '--remove-orphans', desc: '孤立コンテナを削除' },
+                    { name: '-t, --timeout', desc: 'シャットダウンタイムアウト' }
+                ],
+                related: ['docker-compose stop', 'docker-compose rm'],
+                hints: [
+                    { type: 'usage', text: 'データを保持したい場合は-vオプションを使用しない' },
+                    { type: 'danger', text: '-vオプションはボリュームデータも削除する' }
+                ]
+            },
+            {
+                command: 'docker-compose ps',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'high',
+                description: 'Composeで管理されているコンテナを表示',
+                tags: ['beginner', 'compose', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker-compose ps',
+                        desc: 'プロジェクトのコンテナ一覧'
+                    },
+                    {
+                        code: 'docker-compose ps -a',
+                        desc: '停止中も含めて表示'
+                    },
+                    {
+                        code: 'docker-compose ps --services',
+                        desc: 'サービス名のみ表示'
+                    }
+                ],
+                options: [
+                    { name: '-a, --all', desc: '停止中のコンテナも表示' },
+                    { name: '-q, --quiet', desc: 'IDのみ表示' },
+                    { name: '--services', desc: 'サービス名を表示' },
+                    { name: '--filter', desc: 'フィルタリング' }
+                ],
+                related: ['docker ps', 'docker-compose logs'],
+                hints: [
+                    { type: 'usage', text: 'プロジェクト内のコンテナ状態確認に使用' }
+                ]
+            },
+            {
+                command: 'docker-compose logs',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'high',
+                description: 'サービスのログを表示',
+                tags: ['compose', 'debug', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker-compose logs',
+                        desc: 'すべてのサービスのログ'
+                    },
+                    {
+                        code: 'docker-compose logs -f web',
+                        desc: 'webサービスのログを追跡'
+                    },
+                    {
+                        code: 'docker-compose logs --tail 100 db',
+                        desc: 'dbサービスの最新100行'
+                    }
+                ],
+                options: [
+                    { name: '-f, --follow', desc: 'ログを追跡' },
+                    { name: '--tail', desc: '表示する行数' },
+                    { name: '-t, --timestamps', desc: 'タイムスタンプ表示' },
+                    { name: '--no-color', desc: '色なし出力' }
+                ],
+                related: ['docker logs', 'docker-compose exec'],
+                hints: [
+                    { type: 'usage', text: '複数サービスのログを一度に確認できる' }
+                ]
+            },
+            {
+                command: 'docker-compose exec',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'high',
+                description: 'サービス内でコマンドを実行',
+                tags: ['compose', 'debug'],
+                examples: [
+                    {
+                        code: 'docker-compose exec web bash',
+                        desc: 'webサービスでbashを実行'
+                    },
+                    {
+                        code: 'docker-compose exec db mysql -u root -p',
+                        desc: 'dbサービスでMySQLクライアント起動'
+                    },
+                    {
+                        code: 'docker-compose exec -T db mysqldump > backup.sql',
+                        desc: 'TTYなしでバックアップ実行'
+                    }
+                ],
+                options: [
+                    { name: '-d, --detach', desc: 'バックグラウンドで実行' },
+                    { name: '-T', desc: 'TTYを割り当てない' },
+                    { name: '-u, --user', desc: 'ユーザーを指定' },
+                    { name: '-e, --env', desc: '環境変数を設定' },
+                    { name: '--index', desc: 'インスタンス番号' }
+                ],
+                related: ['docker exec', 'docker-compose run'],
+                hints: [
+                    { type: 'usage', text: 'サービス名で指定するため、コンテナ名より簡潔' }
+                ]
+            },
+            {
+                command: 'docker-compose build',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'high',
+                description: 'サービスのイメージをビルド',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose build',
+                        desc: 'すべてのサービスをビルド'
+                    },
+                    {
+                        code: 'docker-compose build web',
+                        desc: '特定サービスのみビルド'
+                    },
+                    {
+                        code: 'docker-compose build --no-cache',
+                        desc: 'キャッシュなしでビルド'
+                    },
+                    {
+                        code: 'docker-compose build --parallel',
+                        desc: '並列ビルド'
+                    }
+                ],
+                options: [
+                    { name: '--no-cache', desc: 'キャッシュを使用しない' },
+                    { name: '--pull', desc: '常に最新イメージを取得' },
+                    { name: '--parallel', desc: '並列ビルド' },
+                    { name: '--build-arg', desc: 'ビルド引数' },
+                    { name: '--progress', desc: '進捗表示形式' }
+                ],
+                related: ['docker build', 'docker-compose up --build'],
+                hints: [
+                    { type: 'usage', text: 'docker-compose up --buildでビルドと起動を同時実行' }
+                ]
+            },
+            {
+                command: 'docker-compose stop',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'medium',
+                description: 'サービスを停止',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose stop',
+                        desc: 'すべてのサービスを停止'
+                    },
+                    {
+                        code: 'docker-compose stop web',
+                        desc: '特定サービスのみ停止'
+                    },
+                    {
+                        code: 'docker-compose stop -t 30',
+                        desc: '30秒の猶予で停止'
+                    }
+                ],
+                options: [
+                    { name: '-t, --timeout', desc: '停止タイムアウト' }
+                ],
+                related: ['docker-compose start', 'docker-compose down'],
+                hints: [
+                    { type: 'usage', text: 'コンテナは削除されず、startで再開可能' }
+                ]
+            },
+            {
+                command: 'docker-compose start',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'medium',
+                description: '停止したサービスを開始',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose start',
+                        desc: 'すべてのサービスを開始'
+                    },
+                    {
+                        code: 'docker-compose start web',
+                        desc: '特定サービスのみ開始'
+                    }
+                ],
+                options: [],
+                related: ['docker-compose stop', 'docker-compose restart'],
+                hints: [
+                    { type: 'usage', text: '既存のコンテナを開始（新規作成はしない）' }
+                ]
+            },
+            {
+                command: 'docker-compose restart',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'medium',
+                description: 'サービスを再起動',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose restart',
+                        desc: 'すべてのサービスを再起動'
+                    },
+                    {
+                        code: 'docker-compose restart web',
+                        desc: '特定サービスのみ再起動'
+                    },
+                    {
+                        code: 'docker-compose restart -t 0',
+                        desc: '即座に再起動'
+                    }
+                ],
+                options: [
+                    { name: '-t, --timeout', desc: '停止タイムアウト' }
+                ],
+                related: ['docker-compose stop', 'docker-compose start'],
+                hints: [
+                    { type: 'usage', text: '設定変更は反映されない（recreateが必要）' }
+                ]
+            },
+            {
+                command: 'docker-compose run',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'medium',
+                description: '一時的なコンテナでコマンドを実行',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose run web bash',
+                        desc: '新しいコンテナでbashを実行'
+                    },
+                    {
+                        code: 'docker-compose run --rm web npm test',
+                        desc: 'テスト実行後にコンテナ削除'
+                    },
+                    {
+                        code: 'docker-compose run -e DEBUG=true web python manage.py migrate',
+                        desc: '環境変数を設定して実行'
+                    }
+                ],
+                options: [
+                    { name: '--rm', desc: '終了後にコンテナ削除' },
+                    { name: '-d, --detach', desc: 'バックグラウンド実行' },
+                    { name: '-e, --env', desc: '環境変数設定' },
+                    { name: '-u, --user', desc: 'ユーザー指定' },
+                    { name: '--no-deps', desc: '依存サービスを起動しない' },
+                    { name: '--service-ports', desc: 'サービスのポートを有効化' }
+                ],
+                related: ['docker-compose exec', 'docker run'],
+                hints: [
+                    { type: 'usage', text: '一回限りのタスク実行に最適' },
+                    { type: 'usage', text: '--rmオプションで自動クリーンアップ' }
+                ]
+            },
+            {
+                command: 'docker-compose pull',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'medium',
+                description: 'サービスのイメージを取得',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose pull',
+                        desc: 'すべてのイメージを取得'
+                    },
+                    {
+                        code: 'docker-compose pull web',
+                        desc: '特定サービスのイメージ取得'
+                    },
+                    {
+                        code: 'docker-compose pull --parallel',
+                        desc: '並列でイメージ取得'
+                    }
+                ],
+                options: [
+                    { name: '--parallel', desc: '並列ダウンロード' },
+                    { name: '--quiet', desc: '詳細出力を抑制' },
+                    { name: '--include-deps', desc: '依存イメージも取得' }
+                ],
+                related: ['docker pull', 'docker-compose build'],
+                hints: [
+                    { type: 'usage', text: 'buildセクションがあるサービスはスキップされる' }
+                ]
+            },
+            {
+                command: 'docker-compose push',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: 'サービスのイメージをプッシュ',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose push',
+                        desc: 'すべてのイメージをプッシュ'
+                    },
+                    {
+                        code: 'docker-compose push web',
+                        desc: '特定サービスのイメージをプッシュ'
+                    }
+                ],
+                options: [
+                    { name: '--ignore-push-failures', desc: 'プッシュ失敗を無視' }
+                ],
+                related: ['docker push', 'docker-compose build'],
+                hints: [
+                    { type: 'usage', text: 'imageセクションで指定されたレジストリにプッシュ' }
+                ]
+            },
+            {
+                command: 'docker-compose config',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'medium',
+                description: '設定ファイルを検証・表示',
+                tags: ['compose', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker-compose config',
+                        desc: '解決済み設定を表示'
+                    },
+                    {
+                        code: 'docker-compose config --services',
+                        desc: 'サービス名一覧を表示'
+                    },
+                    {
+                        code: 'docker-compose config --volumes',
+                        desc: 'ボリューム名一覧を表示'
+                    }
+                ],
+                options: [
+                    { name: '--services', desc: 'サービス名を表示' },
+                    { name: '--volumes', desc: 'ボリューム名を表示' },
+                    { name: '--hash', desc: 'サービスのハッシュ値' },
+                    { name: '-q, --quiet', desc: '検証のみ実行' }
+                ],
+                related: ['docker-compose validate'],
+                hints: [
+                    { type: 'usage', text: '環境変数や変数展開後の設定を確認できる' }
+                ]
+            },
+            {
+                command: 'docker-compose rm',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'medium',
+                description: '停止したコンテナを削除',
+                tags: ['compose', 'cleanup'],
+                examples: [
+                    {
+                        code: 'docker-compose rm',
+                        desc: '停止中のコンテナを削除（確認あり）'
+                    },
+                    {
+                        code: 'docker-compose rm -f',
+                        desc: '確認なしで削除'
+                    },
+                    {
+                        code: 'docker-compose rm -sv',
+                        desc: '匿名ボリュームも削除して停止'
+                    }
+                ],
+                options: [
+                    { name: '-f, --force', desc: '確認なしで削除' },
+                    { name: '-s, --stop', desc: '削除前に停止' },
+                    { name: '-v', desc: '匿名ボリュームも削除' }
+                ],
+                related: ['docker rm', 'docker-compose down'],
+                hints: [
+                    { type: 'usage', text: 'docker-compose downの方が一般的に使用される' }
+                ]
+            },
+            {
+                command: 'docker-compose scale',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: 'サービスのスケール設定（非推奨）',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose scale web=3 worker=2',
+                        desc: 'サービスのインスタンス数を設定'
+                    }
+                ],
+                options: [
+                    { name: '-t, --timeout', desc: 'シャットダウンタイムアウト' }
+                ],
+                related: ['docker-compose up --scale'],
+                hints: [
+                    { type: 'danger', text: '非推奨: docker-compose up --scaleを使用' }
+                ]
+            },
+            {
+                command: 'docker-compose pause',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: 'サービスを一時停止',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose pause',
+                        desc: 'すべてのサービスを一時停止'
+                    },
+                    {
+                        code: 'docker-compose pause web',
+                        desc: '特定サービスを一時停止'
+                    }
+                ],
+                options: [],
+                related: ['docker-compose unpause', 'docker pause'],
+                hints: [
+                    { type: 'usage', text: 'プロセスを凍結（CPU時間を消費しない）' }
+                ]
+            },
+            {
+                command: 'docker-compose unpause',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: '一時停止したサービスを再開',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose unpause',
+                        desc: 'すべてのサービスを再開'
+                    },
+                    {
+                        code: 'docker-compose unpause web',
+                        desc: '特定サービスを再開'
+                    }
+                ],
+                options: [],
+                related: ['docker-compose pause', 'docker unpause'],
+                hints: [
+                    { type: 'usage', text: 'pauseで停止したサービスのみ再開可能' }
+                ]
+            },
+            {
+                command: 'docker-compose port',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: 'ポートマッピングを表示',
+                tags: ['compose', 'troubleshoot'],
+                examples: [
+                    {
+                        code: 'docker-compose port web 80',
+                        desc: 'webサービスの80番ポートのマッピング'
+                    },
+                    {
+                        code: 'docker-compose port --index 2 web 80',
+                        desc: '2番目のインスタンスのポート'
+                    }
+                ],
+                options: [
+                    { name: '--protocol', desc: 'プロトコル指定 (tcp/udp)' },
+                    { name: '--index', desc: 'インスタンス番号' }
+                ],
+                related: ['docker port', 'docker-compose ps'],
+                hints: [
+                    { type: 'usage', text: '動的ポート割り当ての確認に使用' }
+                ]
+            },
+            {
+                command: 'docker-compose events',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: 'コンテナイベントを表示',
+                tags: ['compose', 'debug'],
+                examples: [
+                    {
+                        code: 'docker-compose events',
+                        desc: 'リアルタイムイベントを表示'
+                    },
+                    {
+                        code: 'docker-compose events --json',
+                        desc: 'JSON形式で出力'
+                    }
+                ],
+                options: [
+                    { name: '--json', desc: 'JSON形式で出力' }
+                ],
+                related: ['docker events', 'docker-compose logs'],
+                hints: [
+                    { type: 'usage', text: 'デバッグやモニタリングに使用' }
+                ]
+            },
+            {
+                command: 'docker-compose top',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: 'プロセス一覧を表示',
+                tags: ['compose', 'debug'],
+                examples: [
+                    {
+                        code: 'docker-compose top',
+                        desc: 'すべてのサービスのプロセス'
+                    },
+                    {
+                        code: 'docker-compose top web',
+                        desc: 'webサービスのプロセス'
+                    }
+                ],
+                options: [],
+                related: ['docker top', 'docker-compose ps'],
+                hints: [
+                    { type: 'usage', text: '各コンテナ内のプロセスを確認' }
+                ]
+            },
+            {
+                command: 'docker-compose images',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: '使用中のイメージを表示',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose images',
+                        desc: 'プロジェクトで使用中のイメージ一覧'
+                    },
+                    {
+                        code: 'docker-compose images -q',
+                        desc: 'イメージIDのみ表示'
+                    }
+                ],
+                options: [
+                    { name: '-q, --quiet', desc: 'IDのみ表示' }
+                ],
+                related: ['docker images', 'docker-compose ps'],
+                hints: [
+                    { type: 'usage', text: 'プロジェクトで使用されているイメージの確認' }
+                ]
+            },
+            {
+                command: 'docker-compose version',
+                type: 'compose',
+                category: 'compose',
+                frequency: 'low',
+                description: 'バージョン情報を表示',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker-compose version',
+                        desc: 'Docker Composeのバージョン表示'
+                    },
+                    {
+                        code: 'docker-compose version --short',
+                        desc: '短縮形式で表示'
+                    }
+                ],
+                options: [
+                    { name: '--short', desc: '短縮形式' }
+                ],
+                related: ['docker version'],
+                hints: [
+                    { type: 'usage', text: 'トラブルシューティング時のバージョン確認' }
+                ]
+            },
+
+            // Docker Compose V2 (docker compose) コマンド
+            {
+                command: 'docker compose',
+                type: 'both',
+                category: 'compose',
+                frequency: 'high',
+                description: 'Docker Compose V2（プラグイン版）',
+                tags: ['compose'],
+                examples: [
+                    {
+                        code: 'docker compose up -d',
+                        desc: 'V2でサービスを起動'
+                    },
+                    {
+                        code: 'docker compose down',
+                        desc: 'V2でサービスを停止'
+                    }
+                ],
+                options: [],
+                related: ['docker-compose'],
+                hints: [
+                    { type: 'usage', text: 'docker-composeの後継（ハイフンなし）' },
+                    { type: 'usage', text: 'Docker Desktop には標準で含まれる' }
+                ]
+            }
+        ];
+
+        // 状態管理
+        let filteredCommands = [...commands];
+        let currentTab = 'all';
+        let expandedCards = new Set();
+
+        // 初期化
+        function init() {
+            renderCommands();
+            setupEventListeners();
+        }
+
+        // イベントリスナーのセットアップ
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', filterCommands);
+            document.getElementById('categoryFilter').addEventListener('change', filterCommands);
+            document.getElementById('frequencyFilter').addEventListener('change', filterCommands);
+        }
+
+        // タブ切り替え
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            filterCommands();
+        }
+
+        // クイックフィルター
+        function setQuickFilter(filter) {
+            const quickFilters = document.querySelectorAll('.quick-filter');
+            quickFilters.forEach(f => f.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // フィルターに応じてコマンドをフィルタリング
+            switch(filter) {
+                case 'beginner':
+                    filteredCommands = commands.filter(cmd => cmd.tags.includes('beginner'));
+                    break;
+                case 'troubleshoot':
+                    filteredCommands = commands.filter(cmd => cmd.tags.includes('troubleshoot'));
+                    break;
+                case 'cleanup':
+                    filteredCommands = commands.filter(cmd => cmd.tags.includes('cleanup'));
+                    break;
+                case 'debug':
+                    filteredCommands = commands.filter(cmd => cmd.tags.includes('debug'));
+                    break;
+                default:
+                    filteredCommands = [...commands];
+            }
+
+            applyAllFilters();
+        }
+
+        // フィルタリング
+        function filterCommands() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const frequency = document.getElementById('frequencyFilter').value;
+
+            filteredCommands = commands.filter(cmd => {
+                // タブフィルター
+                if (currentTab !== 'all' && cmd.type !== currentTab && cmd.type !== 'both') {
+                    return false;
+                }
+
+                // 検索フィルター
+                if (searchTerm && !cmd.command.toLowerCase().includes(searchTerm) &&
+                    !cmd.description.toLowerCase().includes(searchTerm) &&
+                    !cmd.category.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+
+                // カテゴリフィルター
+                if (category && cmd.category !== category) {
+                    return false;
+                }
+
+                // 使用頻度フィルター
+                if (frequency && cmd.frequency !== frequency) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            renderCommands();
+        }
+
+        // 全フィルター適用
+        function applyAllFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const frequency = document.getElementById('frequencyFilter').value;
+
+            if (searchTerm || category || frequency || currentTab !== 'all') {
+                filteredCommands = filteredCommands.filter(cmd => {
+                    if (currentTab !== 'all' && cmd.type !== currentTab && cmd.type !== 'both') {
+                        return false;
+                    }
+                    if (searchTerm && !cmd.command.toLowerCase().includes(searchTerm) &&
+                        !cmd.description.toLowerCase().includes(searchTerm)) {
+                        return false;
+                    }
+                    if (category && cmd.category !== category) {
+                        return false;
+                    }
+                    if (frequency && cmd.frequency !== frequency) {
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            renderCommands();
+        }
+
+        // コマンドカードのレンダリング
+        function renderCommands() {
+            const grid = document.getElementById('commandGrid');
+            const notFound = document.getElementById('notFound');
+
+            if (filteredCommands.length === 0) {
+                grid.innerHTML = '';
+                notFound.style.display = 'block';
+                return;
+            }
+
+            notFound.style.display = 'none';
+            grid.innerHTML = filteredCommands.map((cmd, index) => `
+                <div class="command-card ${expandedCards.has(index) ? 'expanded' : ''}" onclick="toggleCard(${index})">
+                    <div class="command-header">
+                        <span class="command-name">${cmd.command}</span>
+                        <span class="command-type type-${cmd.type}">${getTypeName(cmd.type)}</span>
+                    </div>
+                    <p class="command-description">${cmd.description}</p>
+                    <div class="command-meta">
+                        <div class="meta-item">
+                            <span class="importance">${'★'.repeat(getImportanceLevel(cmd.frequency))}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="category-tag">${getCategoryName(cmd.category)}</span>
+                        </div>
+                    </div>
+                    <div class="command-details">
+                        ${cmd.examples ? `
+                            <div class="example-container">
+                                <div class="example-title">使用例:</div>
+                                ${cmd.examples.map(ex => `
+                                    <div style="margin-bottom: 1rem;">
+                                        <pre><code>${escapeHtml(ex.code)}</code><button class="copy-btn" onclick="copyCode(event, this)">コピー</button></pre>
+                                        <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">${ex.desc}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${cmd.options && cmd.options.length > 0 ? `
+                            <div class="example-title">主なオプション:</div>
+                            <div class="options-grid">
+                                ${cmd.options.map(opt => `
+                                    <div class="option-item">
+                                        <span class="option-name">${opt.name}</span>
+                                        <span class="option-desc">${opt.desc}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${cmd.hints ? cmd.hints.map(hint => `
+                            <div class="${hint.type}-hint">${hint.text}</div>
+                        `).join('') : ''}
+                        
+                        ${cmd.related && cmd.related.length > 0 ? `
+                            <div class="related-commands">
+                                <div class="related-title">関連コマンド:</div>
+                                <div class="related-list">
+                                    ${cmd.related.map(rel => `
+                                        <span class="related-link" onclick="searchCommand(event, '${rel}')">${rel}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ヘルパー関数
+        function getTypeName(type) {
+            const names = {
+                'docker': 'Docker',
+                'compose': 'Compose',
+                'both': 'Both'
+            };
+            return names[type] || type;
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                'basic': '基本操作',
+                'image': 'イメージ管理',
+                'container': 'コンテナ管理',
+                'network': 'ネットワーク',
+                'volume': 'ボリューム',
+                'system': 'システム管理',
+                'registry': 'レジストリ',
+                'compose': 'Compose操作'
+            };
+            return names[category] || category;
+        }
+
+        function getImportanceLevel(frequency) {
+            const levels = {
+                'high': 3,
+                'medium': 2,
+                'low': 1
+            };
+            return levels[frequency] || 1;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // カード展開/折りたたみ
+        function toggleCard(index) {
+            if (expandedCards.has(index)) {
+                expandedCards.delete(index);
+            } else {
+                expandedCards.clear(); // 他のカードを閉じる
+                expandedCards.add(index);
+            }
+            renderCommands();
+        }
+
+        // コードコピー
+        function copyCode(event, button) {
+            event.stopPropagation();
+            const code = button.previousElementSibling.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = 'コピー済み';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'コピー';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // 関連コマンド検索
+        function searchCommand(event, command) {
+            event.stopPropagation();
+            document.getElementById('searchInput').value = command;
+            filterCommands();
+        }
+
+        // 初期化実行
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

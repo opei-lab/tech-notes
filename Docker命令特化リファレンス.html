@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker命令特化リファレンス</title>
+    <style>
+        :root {
+            --docker-blue: #0db7ed;
+            --docker-dark: #384d54;
+            --compose-purple: #5f4b8b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--docker-blue) 0%, var(--docker-dark) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .tabs-container {
+            position: relative;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--docker-blue);
+            z-index: 10;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .tab-nav-button:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: var(--shadow-md);
+        }
+
+        .tab-nav-left {
+            left: 10px;
+        }
+
+        .tab-nav-right {
+            right: 10px;
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            color: var(--docker-blue);
+        }
+
+        .tab-button.active {
+            color: var(--docker-blue);
+            border-bottom-color: var(--docker-blue);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--docker-blue);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, var(--docker-blue) 0%, var(--docker-dark) 100%);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .comparison-table tr:hover {
+            background: #f1f5f9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .badge-essential {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .badge-important {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .badge-useful {
+            background: #bbf7d0;
+            color: #166534;
+        }
+
+        .badge-advanced {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-rare {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+
+        .expandable-row {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .expandable-row:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        .expand-content {
+            display: none;
+            background: #f8fafc;
+            border-left: 4px solid var(--docker-blue);
+        }
+
+        .expand-content.show {
+            display: table-row;
+        }
+
+        .expand-content td {
+            padding: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .search-container {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--docker-blue);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: var(--docker-blue);
+            color: white;
+            border-color: var(--docker-blue);
+        }
+
+        .filter-btn.active {
+            background: var(--docker-blue);
+            color: white;
+            border-color: var(--docker-blue);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-table {
+                font-size: 0.875rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📋 Docker命令特化リファレンス</h1>
+            <p class="subtitle">Dockerfile全命令＋主要コマンド＋基本YAML - 詳細解説とインタラクティブ検索</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs-container">
+            <button class="tab-nav-button tab-nav-left" onclick="scrollTabs(-1)">‹</button>
+            <div class="tabs" id="tabsContainer">
+                <button class="tab-button active" onclick="switchTab('dockerfile')">📄 Dockerfile命令</button>
+                <button class="tab-button" onclick="switchTab('docker-commands')">🐳 Dockerコマンド</button>
+                <button class="tab-button" onclick="switchTab('compose-keys')">🐙 Compose YAML</button>
+                <button class="tab-button" onclick="switchTab('interactive')">🔍 インタラクティブ検索</button>
+            </div>
+            <button class="tab-nav-button tab-nav-right" onclick="scrollTabs(1)">›</button>
+        </div>
+
+        <!-- Dockerfile命令タブ -->
+        <div id="dockerfile" class="tab-content active">
+            <div class="section">
+                <h2 class="section-title">📄 Dockerfile命令完全リファレンス</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>命令</th>
+                            <th>重要度</th>
+                            <th>説明</th>
+                            <th>使用例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>FROM</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>ベースイメージを指定（Dockerfileの最初の命令）</td>
+                            <td><code>FROM node:18-alpine</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> すべてのDockerfileの最初に記述する必須命令。土台となるOSやランタイム環境を指定します。<br>
+                                <strong>よく使用されるベースイメージ:</strong><br>
+                                • <code>ubuntu:20.04</code> - Ubuntu Linux<br>
+                                • <code>node:18-alpine</code> - Node.js + Alpine Linux<br>
+                                • <code>python:3.9-slim</code> - Python + 軽量Linux<br>
+                                • <code>nginx:alpine</code> - Nginx + Alpine Linux
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>WORKDIR</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>作業ディレクトリを設定</td>
+                            <td><code>WORKDIR /usr/src/app</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> 以降の命令（RUN、CMD、COPY等）が実行される作業ディレクトリを指定。ディレクトリが存在しない場合は自動作成されます。<br>
+                                <strong>ベストプラクティス:</strong> アプリケーション専用のディレクトリを作成（例: /app, /usr/src/app）
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>COPY</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>ホストからコンテナにファイルをコピー</td>
+                            <td><code>COPY . ./</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> ホスト上のファイルやディレクトリをコンテナ内にコピーします。ADDより安全で推奨されます。<br>
+                                <strong>使用例:</strong><br>
+                                • <code>COPY package*.json ./</code> - 依存関係ファイルのみコピー<br>
+                                • <code>COPY src/ ./src/</code> - srcディレクトリをコピー<br>
+                                • <code>COPY --from=builder /app/dist ./dist</code> - マルチステージビルド
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>RUN</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>ビルド時にコマンドを実行</td>
+                            <td><code>RUN npm install</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> イメージビルド時にシェルコマンドを実行。パッケージインストール、ファイル操作等に使用。<br>
+                                <strong>レイヤー最適化:</strong> 複数コマンドを && で繋げることでレイヤー数を削減<br>
+                                <code>RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>CMD</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>コンテナのデフォルト実行コマンド</td>
+                            <td><code>CMD ["node", "server.js"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> コンテナ起動時に実行されるデフォルトコマンド。Dockerfileに1つだけ記述可能。<br>
+                                <strong>形式:</strong><br>
+                                • JSON形式（推奨）: <code>CMD ["executable", "param1", "param2"]</code><br>
+                                • シェル形式: <code>CMD command param1 param2</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>EXPOSE</strong></td>
+                            <td><span class="badge badge-important">重要</span></td>
+                            <td>コンテナが使用するポートを明示</td>
+                            <td><code>EXPOSE 3000</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> コンテナがリッスンするポートをドキュメント化。実際のポート公開は<code>docker run -p</code>で行います。<br>
+                                <strong>複数ポート:</strong> <code>EXPOSE 80 443</code> または <code>EXPOSE 8000/tcp 8001/udp</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>ENV</strong></td>
+                            <td><span class="badge badge-important">重要</span></td>
+                            <td>環境変数を設定</td>
+                            <td><code>ENV NODE_ENV=production</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> ビルド時とランタイム両方で使用できる環境変数を設定。<br>
+                                <strong>形式:</strong><br>
+                                • <code>ENV key=value</code> - 単一設定<br>
+                                • <code>ENV key1=value1 key2=value2</code> - 複数設定
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>ENTRYPOINT</strong></td>
+                            <td><span class="badge badge-useful">有用</span></td>
+                            <td>コンテナの実行可能ファイルを指定</td>
+                            <td><code>ENTRYPOINT ["docker-entrypoint.sh"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> CMDと異なり、常に実行される固定のエントリーポイント。CMDと組み合わせて使用可能。<br>
+                                <strong>CMDとの違い:</strong> ENTRYPOINTは上書きできない、CMDは引数として渡される
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>ARG</strong></td>
+                            <td><span class="badge badge-useful">有用</span></td>
+                            <td>ビルド時引数を定義</td>
+                            <td><code>ARG NODE_VERSION=18</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> ビルド時のみ使用可能な変数。<code>--build-arg</code>で値を指定可能。<br>
+                                <strong>使用例:</strong> <code>docker build --build-arg NODE_VERSION=16 .</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>ADD</strong></td>
+                            <td><span class="badge badge-useful">有用</span></td>
+                            <td>COPY + 自動展開・URL取得</td>
+                            <td><code>ADD archive.tar.gz /</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> COPYの拡張版。tar自動展開とURL取得が可能だが、予期しない動作の原因になることも。<br>
+                                <strong>推奨:</strong> 単純なファイルコピーにはCOPYを使用
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>LABEL</strong></td>
+                            <td><span class="badge badge-advanced">補足</span></td>
+                            <td>イメージにメタデータを追加</td>
+                            <td><code>LABEL version="1.0"</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> キー=値のペアでイメージに情報を付加。<code>docker inspect</code>で確認可能。<br>
+                                <strong>例:</strong> <code>LABEL maintainer="user@example.com" description="My app"</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>VOLUME</strong></td>
+                            <td><span class="badge badge-advanced">補足</span></td>
+                            <td>マウントポイントを作成</td>
+                            <td><code>VOLUME ["/data"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> 永続化データ用のマウントポイントを作成。コンテナ削除後もデータが保持されます。
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>USER</strong></td>
+                            <td><span class="badge badge-advanced">補足</span></td>
+                            <td>実行ユーザーを指定</td>
+                            <td><code>USER node</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> 以降の命令を実行するユーザーを変更。セキュリティ向上のため非rootユーザーを推奨。
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>HEALTHCHECK</strong></td>
+                            <td><span class="badge badge-rare">特殊</span></td>
+                            <td>ヘルスチェック設定</td>
+                            <td><code>HEALTHCHECK CMD curl -f http://localhost</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> コンテナの健康状態を定期的にチェック。失敗時の自動再起動等に使用。
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>SHELL</strong></td>
+                            <td><span class="badge badge-rare">特殊</span></td>
+                            <td>デフォルトシェルを変更</td>
+                            <td><code>SHELL ["/bin/bash", "-c"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> RUN、CMD、ENTRYPOINTで使用されるデフォルトシェルを変更。
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>STOPSIGNAL</strong></td>
+                            <td><span class="badge badge-rare">特殊</span></td>
+                            <td>コンテナ停止シグナルを指定</td>
+                            <td><code>STOPSIGNAL SIGTERM</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> コンテナ停止時に送信されるシステムコールシグナルを指定します。
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>ONBUILD</strong></td>
+                            <td><span class="badge badge-rare">特殊</span></td>
+                            <td>子イメージで実行される命令</td>
+                            <td><code>ONBUILD RUN npm install</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> このイメージをベースとする他のDockerfileで自動実行される命令を設定。
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Dockerコマンドタブ -->
+        <div id="docker-commands" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">🐳 Dockerコマンド完全リファレンス</h2>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <h3 class="card-title">🚀 基本コマンド</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>重要度</th>
+                                    <th>説明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>docker run</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>コンテナを作成・実行</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker ps</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>コンテナ一覧表示</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker stop</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>コンテナを停止</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker start</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>停止中コンテナを開始</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker restart</code></td>
+                                    <td><span class="badge badge-useful">有用</span></td>
+                                    <td>コンテナを再起動</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">📦 イメージ管理</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>重要度</th>
+                                    <th>説明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>docker build</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>イメージをビルド</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker images</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>イメージ一覧表示</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker pull</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>イメージをダウンロード</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker push</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>イメージをアップロード</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker rmi</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>イメージを削除</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">🔧 操作・管理</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>重要度</th>
+                                    <th>説明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>docker exec</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>コンテナ内でコマンド実行</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker logs</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>コンテナのログ表示</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker cp</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>ファイルをコピー</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker stats</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>リソース使用状況表示</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker inspect</code></td>
+                                    <td><span class="badge badge-useful">有用</span></td>
+                                    <td>詳細情報表示</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">🧹 クリーンアップ</h3>
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>コマンド</th>
+                                    <th>重要度</th>
+                                    <th>説明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>docker system prune</code></td>
+                                    <td><span class="badge badge-essential">必須</span></td>
+                                    <td>未使用リソース一括削除</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker container prune</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>停止中コンテナ削除</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker image prune</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>未使用イメージ削除</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker volume prune</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>未使用ボリューム削除</td>
+                                </tr>
+                                <tr>
+                                    <td><code>docker network prune</code></td>
+                                    <td><span class="badge badge-important">重要</span></td>
+                                    <td>未使用ネットワーク削除</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compose YAMLタブ -->
+        <div id="compose-keys" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">🐙 Docker Compose YAML完全リファレンス</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>キー</th>
+                            <th>重要度</th>
+                            <th>説明</th>
+                            <th>使用例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>services</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>アプリケーションサービス定義</td>
+                            <td><code>services:<br>&nbsp;&nbsp;web:</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> Docker Composeファイルのメインセクション。すべてのサービス（コンテナ）をここで定義します。<br>
+                                <strong>基本構造:</strong>
+                                <div class="code-block">services:
+  web:        # サービス名
+    image: nginx
+  database:   # 別のサービス
+    image: postgres</div>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>image</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>使用するDockerイメージ</td>
+                            <td><code>image: nginx:alpine</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> サービスで使用するベースイメージを指定。buildと併用不可。<br>
+                                <strong>例:</strong> <code>postgres:13</code>, <code>redis:alpine</code>, <code>node:18-slim</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>build</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>Dockerfileからイメージをビルド</td>
+                            <td><code>build: ./app</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> Dockerfileを使用してイメージをビルド。imageと併用不可。<br>
+                                <strong>詳細設定:</strong>
+                                <div class="code-block">build:
+  context: ./app
+  dockerfile: Dockerfile.prod
+  args:
+    NODE_ENV: production</div>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>ports</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>ポートマッピング</td>
+                            <td><code>ports: ["3000:3000"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> ホストとコンテナ間のポートマッピングを設定。<br>
+                                <strong>形式:</strong><br>
+                                • 短縮形: <code>["8080:80"]</code><br>
+                                • 長縮形: <code>["127.0.0.1:8080:80"]</code><br>
+                                • 複数: <code>["3000:3000", "8080:80"]</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>environment</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>環境変数</td>
+                            <td><code>environment:<br>&nbsp;&nbsp;NODE_ENV: production</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> コンテナ内で使用する環境変数を設定。<br>
+                                <strong>形式:</strong><br>
+                                • キー:値形式: <code>NODE_ENV: production</code><br>
+                                • 配列形式: <code>["NODE_ENV=production", "PORT=3000"]</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>volumes</strong></td>
+                            <td><span class="badge badge-essential">必須</span></td>
+                            <td>ボリュームマウント</td>
+                            <td><code>volumes: ["./data:/app/data"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> ホストとコンテナ間でファイル・ディレクトリを共有。<br>
+                                <strong>種類:</strong><br>
+                                • バインドマウント: <code>"./host/path:/container/path"</code><br>
+                                • 名前付きボリューム: <code>"volume-name:/container/path"</code><br>
+                                • 匿名ボリューム: <code>"/container/path"</code>
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>depends_on</strong></td>
+                            <td><span class="badge badge-important">重要</span></td>
+                            <td>サービス依存関係</td>
+                            <td><code>depends_on: ["db"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> サービスの起動順序を制御。依存サービスが先に起動されます。<br>
+                                <strong>制約:</strong> サービスの準備完了は待機しない（起動のみ）
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>networks</strong></td>
+                            <td><span class="badge badge-important">重要</span></td>
+                            <td>ネットワーク接続</td>
+                            <td><code>networks: ["frontend"]</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> サービスが接続するカスタムネットワークを指定。<br>
+                                <strong>自動作成:</strong> 指定しない場合はデフォルトネットワークを使用
+                            </td>
+                        </tr>
+
+                        <tr class="expandable-row" onclick="toggleExpand(this)">
+                            <td><strong>restart</strong></td>
+                            <td><span class="badge badge-important">重要</span></td>
+                            <td>再起動ポリシー</td>
+                            <td><code>restart: unless-stopped</code></td>
+                        </tr>
+                        <tr class="expand-content">
+                            <td colspan="4">
+                                <strong>詳細解説:</strong> コンテナの自動再起動設定。<br>
+                                <strong>オプション:</strong><br>
+                                • <code>no</code> - 再起動しない<br>
+                                • <code>always</code> - 常に再起動<br>
+                                • <code>on-failure</code> - エラー時のみ<br>
+                                • <code>unless-stopped</code> - 手動停止以外は再起動
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- インタラクティブ検索タブ -->
+        <div id="interactive" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">🔍 インタラクティブ検索</h2>
+                
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="searchInput" placeholder="命令やキーワードで検索..." onkeyup="filterCommands()">
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterByCategory('all')">すべて</button>
+                    <button class="filter-btn" onclick="filterByCategory('essential')">必須</button>
+                    <button class="filter-btn" onclick="filterByCategory('important')">重要</button>
+                    <button class="filter-btn" onclick="filterByCategory('useful')">有用</button>
+                    <button class="filter-btn" onclick="filterByCategory('dockerfile')">Dockerfile</button>
+                    <button class="filter-btn" onclick="filterByCategory('docker')">Docker</button>
+                    <button class="filter-btn" onclick="filterByCategory('compose')">Compose</button>
+                </div>
+
+                <div id="searchResults">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>命令/コマンド</th>
+                                <th>種類</th>
+                                <th>重要度</th>
+                                <th>説明</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <!-- JavaScript で動的に生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // タブ切り替え機能
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // タブスクロール機能
+        function scrollTabs(direction) {
+            const tabsContainer = document.getElementById('tabsContainer');
+            const scrollAmount = 200;
+            
+            if (direction === -1) {
+                tabsContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                tabsContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        // 矢印ボタンの表示制御
+        function updateTabNavButtons() {
+            const tabsContainer = document.getElementById('tabsContainer');
+            const leftButton = document.querySelector('.tab-nav-left');
+            const rightButton = document.querySelector('.tab-nav-right');
+            
+            const canScrollLeft = tabsContainer.scrollLeft > 0;
+            const canScrollRight = tabsContainer.scrollLeft < (tabsContainer.scrollWidth - tabsContainer.clientWidth);
+            
+            leftButton.style.opacity = canScrollLeft ? '1' : '0.3';
+            rightButton.style.opacity = canScrollRight ? '1' : '0.3';
+            leftButton.style.pointerEvents = canScrollLeft ? 'auto' : 'none';
+            rightButton.style.pointerEvents = canScrollRight ? 'auto' : 'none';
+        }
+
+        // 展開/折りたたみ機能
+        function toggleExpand(row) {
+            const expandRow = row.nextElementSibling;
+            if (expandRow && expandRow.classList.contains('expand-content')) {
+                expandRow.classList.toggle('show');
+            }
+        }
+
+        // 検索・フィルター用のデータ
+        const commandsData = [
+            { name: 'FROM', type: 'Dockerfile', category: 'essential', description: 'ベースイメージを指定（必須）' },
+            { name: 'WORKDIR', type: 'Dockerfile', category: 'essential', description: '作業ディレクトリを設定' },
+            { name: 'COPY', type: 'Dockerfile', category: 'essential', description: 'ファイルをコピー' },
+            { name: 'RUN', type: 'Dockerfile', category: 'essential', description: 'ビルド時コマンド実行' },
+            { name: 'CMD', type: 'Dockerfile', category: 'essential', description: 'デフォルト実行コマンド' },
+            { name: 'EXPOSE', type: 'Dockerfile', category: 'important', description: 'ポートを公開' },
+            { name: 'ENV', type: 'Dockerfile', category: 'important', description: '環境変数を設定' },
+            { name: 'ENTRYPOINT', type: 'Dockerfile', category: 'useful', description: '実行可能ファイルを指定' },
+            { name: 'ARG', type: 'Dockerfile', category: 'useful', description: 'ビルド時引数' },
+            { name: 'docker run', type: 'Docker', category: 'essential', description: 'コンテナを実行' },
+            { name: 'docker ps', type: 'Docker', category: 'essential', description: 'コンテナ一覧' },
+            { name: 'docker build', type: 'Docker', category: 'essential', description: 'イメージをビルド' },
+            { name: 'docker exec', type: 'Docker', category: 'essential', description: 'コンテナ内でコマンド実行' },
+            { name: 'docker logs', type: 'Docker', category: 'essential', description: 'ログを表示' },
+            { name: 'services', type: 'Compose', category: 'essential', description: 'サービス定義' },
+            { name: 'image', type: 'Compose', category: 'essential', description: '使用イメージ' },
+            { name: 'build', type: 'Compose', category: 'essential', description: 'ビルド設定' },
+            { name: 'ports', type: 'Compose', category: 'essential', description: 'ポートマッピング' },
+            { name: 'environment', type: 'Compose', category: 'essential', description: '環境変数' },
+            { name: 'volumes', type: 'Compose', category: 'essential', description: 'ボリュームマウント' }
+        ];
+
+        // 検索機能
+        function filterCommands() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const currentCategory = document.querySelector('.filter-btn.active').textContent;
+            
+            let filteredData = commandsData;
+            
+            if (searchTerm) {
+                filteredData = filteredData.filter(cmd => 
+                    cmd.name.toLowerCase().includes(searchTerm) || 
+                    cmd.description.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (currentCategory !== 'すべて') {
+                const categoryMap = {
+                    '必須': 'essential',
+                    '重要': 'important', 
+                    '有用': 'useful',
+                    'Dockerfile': 'dockerfile',
+                    'Docker': 'docker',
+                    'Compose': 'compose'
+                };
+                
+                if (categoryMap[currentCategory]) {
+                    if (['dockerfile', 'docker', 'compose'].includes(categoryMap[currentCategory])) {
+                        filteredData = filteredData.filter(cmd => 
+                            cmd.type.toLowerCase() === categoryMap[currentCategory]
+                        );
+                    } else {
+                        filteredData = filteredData.filter(cmd => 
+                            cmd.category === categoryMap[currentCategory]
+                        );
+                    }
+                }
+            }
+            
+            displaySearchResults(filteredData);
+        }
+
+        // カテゴリフィルター
+        function filterByCategory(category) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            filterCommands();
+        }
+
+        // 検索結果表示
+        function displaySearchResults(data) {
+            const resultsBody = document.getElementById('resultsBody');
+            
+            if (data.length === 0) {
+                resultsBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">該当する結果が見つかりませんでした</td></tr>';
+                return;
+            }
+            
+            resultsBody.innerHTML = data.map(cmd => {
+                const badgeClass = `badge-${cmd.category}`;
+                const categoryText = {
+                    'essential': '必須',
+                    'important': '重要',
+                    'useful': '有用',
+                    'advanced': '補足',
+                    'rare': '特殊'
+                }[cmd.category] || cmd.category;
+                
+                return `
+                    <tr>
+                        <td><strong>${cmd.name}</strong></td>
+                        <td>${cmd.type}</td>
+                        <td><span class="badge ${badgeClass}">${categoryText}</span></td>
+                        <td>${cmd.description}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 初期化
+        window.addEventListener('load', () => {
+            updateTabNavButtons();
+            filterCommands(); // 初期検索結果表示
+        });
+        window.addEventListener('resize', updateTabNavButtons);
+        document.getElementById('tabsContainer').addEventListener('scroll', updateTabNavButtons);
+    </script>
+</body>
+</html>

@@ -1,0 +1,3081 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git完全ガイド</title>
+    <style>
+        :root {
+            --git-orange: #f05032;
+            --git-dark: #2d1b69;
+            --github-black: #24292e;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--git-orange) 0%, var(--git-dark) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .tab-buttons {
+            display: flex;
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+            background: none;
+            border: none;
+            color: var(--text);
+        }
+
+        .tab-button:hover {
+            background: rgba(240, 80, 50, 0.1);
+        }
+
+        .tab-button.active {
+            color: var(--git-orange);
+            background: white;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--git-orange);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .concept-section {
+            margin-bottom: 3rem;
+        }
+
+        .concept-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--git-dark);
+            border-bottom: 2px solid var(--git-orange);
+            padding-bottom: 0.5rem;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .concept-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .concept-card:hover {
+            border-color: var(--git-orange);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .concept-card h3 {
+            color: var(--git-orange);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .diagram {
+            background: #f8fafc;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .git-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .flow-step {
+            flex: 1;
+            min-width: 150px;
+            padding: 1rem;
+            background: white;
+            border: 2px solid var(--git-orange);
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-step h4 {
+            color: var(--git-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-step::after {
+            content: '→';
+            position: absolute;
+            right: -1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: var(--git-orange);
+            font-weight: bold;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .branch-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .branch-line {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .branch-name {
+            background: var(--git-orange);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .branch-commits {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .commit {
+            width: 30px;
+            height: 30px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .commit.current {
+            background: var(--git-orange);
+            box-shadow: 0 0 0 3px rgba(240, 80, 50, 0.3);
+        }
+
+        .branch-line::after {
+            content: '';
+            height: 2px;
+            background: var(--border);
+            flex: 1;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-left: 4px solid var(--warning);
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .danger-box {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-left: 4px solid var(--danger);
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-left: 4px solid var(--info);
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .warning-title, .danger-title, .info-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-title {
+            color: #856404;
+        }
+
+        .danger-title {
+            color: #721c24;
+        }
+
+        .info-title {
+            color: #0c5460;
+        }
+
+        .search-container {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="search"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="search"]:focus {
+            outline: none;
+            border-color: var(--git-orange);
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .quick-filter {
+            padding: 0.5rem 1rem;
+            background: #f3f4f6;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-filter:hover {
+            background: #e5e7eb;
+        }
+
+        .quick-filter.active {
+            background: var(--git-orange);
+            color: white;
+            border-color: var(--git-orange);
+        }
+
+        .workflow-section, .command-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .workflow-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--git-dark);
+        }
+
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .workflow-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .workflow-card h3 {
+            color: var(--git-orange);
+            margin-bottom: 1rem;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .step-number {
+            background: var(--git-orange);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-command {
+            font-family: monospace;
+            background: var(--github-black);
+            color: #e2e8f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .step-desc {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .command-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .command-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--git-orange);
+        }
+
+        .command-card.expanded {
+            grid-column: 1 / -1;
+            border-color: var(--git-orange);
+        }
+
+        .command-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .command-name {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--git-dark);
+        }
+
+        .command-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .category-basic {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .category-branch {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .category-remote {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .category-history {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .category-advanced {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .category-config {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .command-description {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .command-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .importance {
+            color: #fbbf24;
+        }
+
+        .usage-freq {
+            padding: 0.25rem 0.5rem;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .freq-high {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .freq-medium {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .freq-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .command-details {
+            display: none;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .command-card.expanded .command-details {
+            display: block;
+        }
+
+        .example-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        pre {
+            background: var(--github-black);
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            position: relative;
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .option-item {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .option-name {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--git-dark);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .option-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .usage-hint {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .danger-hint {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .related-commands {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+
+        .related-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .related-list {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .related-link {
+            padding: 0.25rem 0.75rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--git-orange);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .related-link:hover {
+            background: var(--git-orange);
+            color: white;
+            border-color: var(--git-orange);
+        }
+
+        .not-found {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .merge-conflict-diagram {
+            background: #fff5f5;
+            border: 2px solid #f56565;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .conflict-example {
+            background: var(--github-black);
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            margin: 0.5rem 0;
+        }
+
+        .conflict-marker {
+            color: #f56565;
+            font-weight: bold;
+        }
+
+        .your-changes {
+            color: #68d391;
+        }
+
+        .incoming-changes {
+            color: #63b3ed;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .concept-grid,
+            .command-grid,
+            .workflow-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .git-flow {
+                flex-direction: column;
+            }
+
+            .flow-step::after {
+                display: none;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .tab-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Git 完全ガイド</h1>
+            <p class="subtitle">基礎概念から実践的なコマンドまで</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="nav-tabs">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('concepts')">Git基礎概念</button>
+                <button class="tab-button" onclick="switchTab('workflows')">よく使うワークフロー</button>
+                <button class="tab-button" onclick="switchTab('commands')">コマンドリファレンス</button>
+                <button class="tab-button" onclick="switchTab('troubleshooting')">トラブル対応</button>
+            </div>
+
+            <!-- Git基礎概念タブ -->
+            <div id="concepts" class="tab-content active">
+                <div class="concept-section">
+                    <h2 class="concept-title">Gitとは - 分散型バージョン管理システム</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🌐 分散型の仕組み</h3>
+                            <p>Gitは<strong>分散型</strong>バージョン管理システムです。これは各開発者が完全なリポジトリのコピーを持つことを意味します。</p>
+                            <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                                <li><strong>ローカルリポジトリ</strong> - あなたのPCにある完全な履歴</li>
+                                <li><strong>リモートリポジトリ</strong> - GitHub等のサーバー上の履歴</li>
+                                <li>どちらも同じ完全な履歴を持つ</li>
+                                <li>オフラインでも作業可能</li>
+                            </ul>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>💻 ローカルとリモートの関係</h3>
+                            <p>開発は主にローカルで行い、共有したいタイミングでリモートと同期します。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 基本的な流れ</div>
+                                <ol style="margin-top: 0.5rem;">
+                                    <li>ローカルで開発・コミット</li>
+                                    <li>push でリモートに送信</li>
+                                    <li>pull で他の人の変更を取得</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagram">
+                        <h3 style="margin-bottom: 1rem;">分散型リポジトリの構造</h3>
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; align-items: center;">
+                            <div style="text-align: center;">
+                                <div style="background: #f3f4f6; border: 2px solid var(--git-orange); border-radius: 8px; padding: 2rem;">
+                                    <h4 style="color: var(--git-dark); margin-bottom: 1rem;">ローカルリポジトリ</h4>
+                                    <p style="font-size: 0.875rem;">あなたのPC</p>
+                                    <div style="margin-top: 1rem;">
+                                        <div style="background: white; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">作業ディレクトリ</div>
+                                        <div style="background: white; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">ステージングエリア</div>
+                                        <div style="background: white; padding: 0.5rem; border-radius: 4px;">ローカルリポジトリ</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: var(--git-orange);">⇄</div>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="font-family: monospace; background: var(--github-black); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; margin-bottom: 0.25rem;">git push</div>
+                                    <div style="font-family: monospace; background: var(--github-black); color: white; padding: 0.25rem 0.5rem; border-radius: 4px;">git pull</div>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="background: #dbeafe; border: 2px solid #3b82f6; border-radius: 8px; padding: 2rem;">
+                                    <h4 style="color: #1e40af; margin-bottom: 1rem;">リモートリポジトリ</h4>
+                                    <p style="font-size: 0.875rem;">GitHub/GitLab等</p>
+                                    <div style="margin-top: 1rem;">
+                                        <div style="background: white; padding: 0.5rem; border-radius: 4px;">完全な履歴</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div style="text-align: center;">
+                                <div style="background: #f3f4f6; border: 2px solid var(--git-orange); border-radius: 8px; padding: 1rem;">
+                                    <p style="font-size: 0.875rem;">同僚のローカルリポジトリ</p>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="background: #f3f4f6; border: 2px solid var(--git-orange); border-radius: 8px; padding: 1rem;">
+                                    <p style="font-size: 0.875rem;">別の同僚のローカルリポジトリ</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 1rem; text-align: center; color: var(--text-muted);">みんなが同じ完全な履歴を持つ = 分散型</p>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">Gitの基本構造</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>📁 ワーキングディレクトリ</h3>
+                            <p>実際にファイルを編集する作業場所です。ここでコードを書いたり、ファイルを編集したりします。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 ポイント</div>
+                                変更したファイルは「変更されたが、まだGitに記録されていない」状態になります。
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>📦 ステージングエリア（インデックス）</h3>
+                            <p>コミットする前の「準備エリア」です。git addでファイルをここに追加します。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 ポイント</div>
+                                コミットしたい変更だけを選択的にステージングできます。
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>📚 リポジトリ</h3>
+                            <p>Gitがファイルの履歴を保存する場所です。git commitでステージングエリアの内容をここに記録します。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 ポイント</div>
+                                .gitディレクトリにすべての履歴情報が保存されています。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagram">
+                        <h3 style="margin-bottom: 1rem;">Git データフロー</h3>
+                        <div class="git-flow">
+                            <div class="flow-step">
+                                <h4>ワーキングディレクトリ</h4>
+                                <p>ファイル編集</p>
+                                <code>file.txt</code>
+                            </div>
+                            <div class="flow-step">
+                                <h4>ステージングエリア</h4>
+                                <p>git add</p>
+                                <code>git add file.txt</code>
+                            </div>
+                            <div class="flow-step">
+                                <h4>リポジトリ</h4>
+                                <p>git commit</p>
+                                <code>git commit -m "message"</code>
+                            </div>
+                            <div class="flow-step">
+                                <h4>リモートリポジトリ</h4>
+                                <p>git push</p>
+                                <code>git push origin main</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">ブランチの概念</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🌳 ブランチとは</h3>
+                            <p>開発の流れを分岐させる仕組みです。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 重要な基本</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li><strong>最初は1つだけ</strong> - デフォルトで<code>main</code>（または<code>master</code>）ブランチのみ</li>
+                                    <li><strong>現在地</strong> - 何もしなければ<code>main</code>ブランチにいる</li>
+                                    <li><strong>分岐</strong> - 新しいブランチを作ると、そこから枝分かれ</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>📝 ブランチ名の慣習</h3>
+                            <p>チーム開発では、ブランチ名に一定のルールを設けることが一般的です。</p>
+                            <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                                <li><code>main</code> または <code>master</code> - メインブランチ</li>
+                                <li><code>develop</code> - 開発用統合ブランチ</li>
+                                <li><code>feature/機能名</code> - 新機能開発（例: feature/login）</li>
+                                <li><code>bugfix/バグ名</code> - バグ修正（例: bugfix/header-style）</li>
+                                <li><code>hotfix/修正名</code> - 緊急修正（例: hotfix/security-patch）</li>
+                                <li><code>release/バージョン</code> - リリース準備（例: release/v1.2.0）</li>
+                            </ul>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🔄 ブランチの作成と切り替え</h3>
+                            <p>ブランチ操作には2つのステップがあります。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 別々に行う場合</div>
+                                <ol style="margin-top: 0.5rem;">
+                                    <li><code>git branch feature/new-login</code> - ブランチ作成のみ</li>
+                                    <li><code>git switch feature/new-login</code> - ブランチに切り替え</li>
+                                </ol>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-title">💡 同時に行う場合</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li><code>git switch -c feature/new-login</code> - 作成＋切り替え（推奨）</li>
+                                    <li><code>git checkout -b feature/new-login</code> - 作成＋切り替え（旧式）</li>
+                                </ul>
+                            </div>
+                            <div class="warning-box">
+                                <div class="warning-title">⚠️ 重要</div>
+                                ブランチを切り替えると、ワーキングディレクトリの中身も切り替わります！
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagram">
+                        <h3 style="margin-bottom: 1rem;">ブランチの構造（木のイメージ）</h3>
+                        <svg viewBox="0 0 800 400" style="max-width: 100%; height: auto;">
+                            <!-- メインブランチ（幹） -->
+                            <line x1="50" y1="200" x2="750" y2="200" stroke="#4a5568" stroke-width="8" />
+                            
+                            <!-- feature/loginブランチ（枝1） -->
+                            <path d="M 200 200 Q 250 150, 300 140 L 500 140" 
+                                  fill="none" stroke="#48bb78" stroke-width="6" />
+                            
+                            <!-- bugfix/headerブランチ（枝2） -->
+                            <path d="M 300 200 Q 350 250, 400 260 L 550 260" 
+                                  fill="none" stroke="#ed8936" stroke-width="6" />
+                            
+                            <!-- hotfix/securityブランチ（短い枝） -->
+                            <path d="M 500 200 Q 550 180, 600 180" 
+                                  fill="none" stroke="#e53e3e" stroke-width="6" />
+                            
+                            <!-- コミット（丸） -->
+                            <!-- mainブランチのコミット -->
+                            <circle cx="100" cy="200" r="12" fill="#4a5568" />
+                            <circle cx="200" cy="200" r="12" fill="#4a5568" />
+                            <circle cx="300" cy="200" r="12" fill="#4a5568" />
+                            <circle cx="500" cy="200" r="12" fill="#4a5568" />
+                            <circle cx="650" cy="200" r="16" fill="#f05032" stroke="#f05032" stroke-width="3" fill-opacity="0.3" />
+                            
+                            <!-- feature/loginのコミット -->
+                            <circle cx="350" cy="140" r="12" fill="#48bb78" />
+                            <circle cx="425" cy="140" r="12" fill="#48bb78" />
+                            <circle cx="500" cy="140" r="12" fill="#48bb78" />
+                            
+                            <!-- bugfix/headerのコミット -->
+                            <circle cx="450" cy="260" r="12" fill="#ed8936" />
+                            <circle cx="550" cy="260" r="12" fill="#ed8936" />
+                            
+                            <!-- hotfixのコミット -->
+                            <circle cx="600" cy="180" r="12" fill="#e53e3e" />
+                            
+                            <!-- ブランチ名ラベル -->
+                            <text x="750" y="205" text-anchor="end" font-family="monospace" font-size="14" font-weight="bold">main</text>
+                            <text x="510" y="130" font-family="monospace" font-size="14" fill="#48bb78">feature/login</text>
+                            <text x="560" y="280" font-family="monospace" font-size="14" fill="#ed8936">bugfix/header</text>
+                            <text x="610" y="170" font-family="monospace" font-size="14" fill="#e53e3e">hotfix/security</text>
+                            
+                            <!-- 現在地表示 -->
+                            <text x="650" y="235" text-anchor="middle" font-size="12" fill="#f05032">HEAD</text>
+                            <path d="M 650 220 L 650 215" stroke="#f05032" stroke-width="2" marker-end="url(#arrowhead)" />
+                            
+                            <!-- 矢印の定義 -->
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#f05032" />
+                                </marker>
+                            </defs>
+                        </svg>
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <p style="color: var(--text-muted); margin-bottom: 0.5rem;">現在のブランチ: <strong style="color: var(--git-orange);">main</strong> (HEADが指している場所)</p>
+                            <div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 20px; height: 20px; background: #4a5568; border-radius: 50%;"></div>
+                                    <span style="font-size: 0.875rem;">mainブランチ（本流）</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 20px; height: 20px; background: #48bb78; border-radius: 50%;"></div>
+                                    <span style="font-size: 0.875rem;">機能開発ブランチ</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 20px; height: 20px; background: #ed8936; border-radius: 50%;"></div>
+                                    <span style="font-size: 0.875rem;">バグ修正ブランチ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-title">💡 ブランチ操作の基本</div>
+                        <ul style="margin-top: 0.5rem;">
+                            <li><code>git branch</code> - ブランチ一覧を表示</li>
+                            <li><code>git branch feature-login</code> - 新しいブランチを作成</li>
+                            <li><code>git switch feature-login</code> - ブランチに切り替え</li>
+                            <li><code>git switch -c feature-login</code> - 作成と同時に切り替え</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">GitHub / GitLab とは</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🌐 GitHubの役割</h3>
+                            <p>GitHub（またはGitLab）は、Gitリポジトリをホスティングするサービスです。</p>
+                            <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                                <li><strong>リモートリポジトリの保管</strong> - クラウド上でコードを管理</li>
+                                <li><strong>Web UI提供</strong> - ブラウザでコードを閲覧・管理</li>
+                                <li><strong>コラボレーション機能</strong> - PR、Issue、Wiki等</li>
+                                <li><strong>CI/CD連携</strong> - 自動テスト・デプロイ</li>
+                            </ul>
+                            <div class="info-box">
+                                <div class="info-title">💡 GitとGitHubの違い</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li><strong>Git</strong> = バージョン管理システム（ツール）</li>
+                                    <li><strong>GitHub</strong> = Gitリポジトリのホスティングサービス</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>☁️ リモートリポジトリ</h3>
+                            <p>GitHub上にあるリポジトリをリモートリポジトリと呼びます。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 基本的な使い方</div>
+                                <ol style="margin-top: 0.5rem;">
+                                    <li><strong>clone</strong> - GitHubからローカルにコピー</li>
+                                    <li><strong>push</strong> - ローカルの変更をGitHubに送信</li>
+                                    <li><strong>pull</strong> - GitHubの変更をローカルに取得</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">Pull Request（プルリクエスト）とは</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🔀 Pull Requestの本質</h3>
+                            <p><strong>分岐させたブランチを別のブランチに合流させるリクエスト</strong>です。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 重要なポイント</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li>基本的に<strong>GitHub上で行う</strong>作業</li>
+                                    <li>コードレビューの機会を提供</li>
+                                    <li>マージ前に議論・修正が可能</li>
+                                    <li>自動テストの実行タイミング</li>
+                                </ul>
+                            </div>
+                            <div class="warning-box">
+                                <div class="warning-title">⚠️ 注意</div>
+                                <code>git merge</code>はローカルで直接マージするが、PRはGitHub上でレビューを経てマージする
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>📝 PR作成から完了まで</h3>
+                            <ol style="padding-left: 1.5rem;">
+                                <li><strong>ローカルで開発</strong>
+                                    <pre style="margin: 0.5rem 0;"><code>git switch -c feature/new-feature
+# 開発作業...
+git add .
+git commit -m "Add new feature"</code></pre>
+                                </li>
+                                <li><strong>GitHubにプッシュ</strong>
+                                    <pre style="margin: 0.5rem 0;"><code>git push -u origin feature/new-feature</code></pre>
+                                </li>
+                                <li><strong>GitHub画面でPR作成</strong>
+                                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                        <li>ブラウザでGitHubを開く</li>
+                                        <li>「Compare & pull request」ボタンをクリック</li>
+                                        <li>タイトルと説明を記入</li>
+                                        <li>レビュアーを指定</li>
+                                    </ul>
+                                </li>
+                                <li><strong>レビュー・マージ</strong>
+                                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                        <li>コードレビュー</li>
+                                        <li>自動テスト実行</li>
+                                        <li>承認後、マージボタンでマージ</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="diagram">
+                        <h3 style="margin-bottom: 1rem;">Pull Requestの流れ</h3>
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; align-items: start;">
+                            <div style="text-align: center;">
+                                <h4 style="color: var(--git-dark); margin-bottom: 1rem;">ローカル作業</h4>
+                                <div style="background: #f3f4f6; border: 2px solid var(--git-orange); border-radius: 8px; padding: 1.5rem;">
+                                    <div style="background: white; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">feature/login ブランチ</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted);">↓ 開発・コミット</div>
+                                    <div style="background: #e6ffed; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">+ ログイン機能追加</div>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; color: var(--git-orange); margin-top: 2rem;">→</div>
+                                <div style="font-family: monospace; font-size: 0.875rem; margin-top: 0.5rem;">git push</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <h4 style="color: #1e40af; margin-bottom: 1rem;">GitHub上</h4>
+                                <div style="background: #dbeafe; border: 2px solid #3b82f6; border-radius: 8px; padding: 1.5rem;">
+                                    <div style="background: white; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">Pull Request作成</div>
+                                    <div style="font-size: 0.875rem; margin: 0.5rem 0;">↓</div>
+                                    <div style="background: #fef3c7; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">コードレビュー</div>
+                                    <div style="font-size: 0.875rem; margin: 0.5rem 0;">↓</div>
+                                    <div style="background: #d1fae5; padding: 0.5rem; border-radius: 4px;">マージ完了</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-title">💡 なぜGitHub上でマージするの？</div>
+                        <ul style="margin-top: 0.5rem;">
+                            <li><strong>コードレビュー</strong> - チームメンバーがコードを確認</li>
+                            <li><strong>議論の場</strong> - コメントで改善点を議論</li>
+                            <li><strong>履歴の透明性</strong> - 誰が何をレビュー・承認したか記録</li>
+                            <li><strong>自動化</strong> - テスト実行、デプロイのトリガー</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">リモートリポジトリとの連携</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🔄 プル（Pull）の仕組み</h3>
+                            <p><code>git pull</code>は実際には2つの操作を組み合わせたものです：</p>
+                            <ol style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                <li><code>git fetch</code> - リモートの変更を取得</li>
+                                <li><code>git merge</code> - 現在のブランチにマージ</li>
+                            </ol>
+                            <div class="warning-box">
+                                <div class="warning-title">⚠️ 重要</div>
+                                pullは自動的にマージを行うため、意図しないマージが発生する可能性があります。
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>📤 プッシュ（Push）の役割</h3>
+                            <p>ローカルの変更をリモートリポジトリに送信します。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 プッシュのタイミング</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li>機能が一段落したとき</li>
+                                    <li>作業終了時（バックアップ）</li>
+                                    <li>PR作成前</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">マージとコンフリクト</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🔀 マージの種類</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                <div>
+                                    <h4>ファストフォワード</h4>
+                                    <p>履歴が一直線の場合、単純にポインタを移動</p>
+                                </div>
+                                <div>
+                                    <h4>3-way マージ</h4>
+                                    <p>分岐した履歴を統合する際に新しいマージコミットを作成</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>⚔️ コンフリクトが起きる条件</h3>
+                            <p><strong>合流先ブランチも作業ブランチも同じファイルの同じ部分を変更していた場合</strong>に発生します。</p>
+                            <div class="warning-box">
+                                <div class="warning-title">⚠️ コンフリクトのタイミング</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li><code>git merge</code> 実行時</li>
+                                    <li><code>git pull</code> 実行時</li>
+                                    <li>GitHub上でPRをマージしようとした時</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagram">
+                        <h3 style="margin-bottom: 1rem;">コンフリクト発生の仕組み</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div style="text-align: center;">
+                                <h4 style="color: var(--git-dark); font-size: 1rem;">分岐前の状態</h4>
+                                <div style="background: #f3f4f6; border: 1px solid var(--border); border-radius: 4px; padding: 1rem; margin-top: 0.5rem;">
+                                    <code style="font-size: 0.875rem;">index.js</code>
+                                    <pre style="margin: 0.5rem 0; font-size: 0.8rem; background: white;">const title = "My App";</pre>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <h4 style="color: #48bb78; font-size: 1rem;">feature ブランチ</h4>
+                                <div style="background: #e6ffed; border: 1px solid #48bb78; border-radius: 4px; padding: 1rem; margin-top: 0.5rem;">
+                                    <code style="font-size: 0.875rem;">index.js</code>
+                                    <pre style="margin: 0.5rem 0; font-size: 0.8rem; background: white;">const title = "New App";</pre>
+                                    <span style="font-size: 0.75rem; color: #22543d;">タイトルを変更</span>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <h4 style="color: #4a5568; font-size: 1rem;">main ブランチ</h4>
+                                <div style="background: #e2e8f0; border: 1px solid #4a5568; border-radius: 4px; padding: 1rem; margin-top: 0.5rem;">
+                                    <code style="font-size: 0.875rem;">index.js</code>
+                                    <pre style="margin: 0.5rem 0; font-size: 0.8rem; background: white;">const title = "Super App";</pre>
+                                    <span style="font-size: 0.75rem; color: #2d3748;">別のタイトルに変更</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 1rem; color: var(--danger);">↓ マージしようとすると...</div>
+                    </div>
+
+                    <div class="merge-conflict-diagram">
+                        <h3>❌ コンフリクト（競合）の表示</h3>
+                        <p>Gitは自動的に判断できないため、以下のようなマーカーを挿入します：</p>
+                        
+                        <div class="conflict-example">
+<span class="conflict-marker">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span> <span style="color: #666; font-size: 0.875rem;">（現在のブランチの内容）</span>
+<span class="your-changes">const title = "Super App";</span>
+<span class="conflict-marker">=======</span> <span style="color: #666; font-size: 0.875rem;">（区切り線）</span>
+<span class="incoming-changes">const title = "New App";</span>
+<span class="conflict-marker">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature</span> <span style="color: #666; font-size: 0.875rem;">（マージしようとしているブランチの内容）</span>
+                        </div>
+
+                        <div class="info-box">
+                            <div class="info-title">💡 コンフリクト解決手順</div>
+                            <ol>
+                                <li><strong>ファイルを開く</strong> - コンフリクトマーカーがある箇所を確認</li>
+                                <li><strong>正しい内容を選択</strong>
+                                    <ul style="margin: 0.5rem 0 0 1.5rem;">
+                                        <li>どちらか一方を採用</li>
+                                        <li>両方を組み合わせる</li>
+                                        <li>全く新しい内容にする</li>
+                                    </ul>
+                                </li>
+                                <li><strong>マーカーを削除</strong> - &lt;&lt;&lt;, ===, &gt;&gt;&gt; の行を削除</li>
+                                <li><strong>ステージング</strong> - <code>git add ファイル名</code></li>
+                                <li><strong>コミット</strong> - <code>git commit</code></li>
+                            </ol>
+                        </div>
+
+                        <div class="warning-box">
+                            <div class="warning-title">⚠️ GitHub上でのコンフリクト</div>
+                            <p>PRでコンフリクトが発生した場合：</p>
+                            <ul style="margin-top: 0.5rem;">
+                                <li>GitHub上で直接解決（簡単な場合）</li>
+                                <li>ローカルでmainをマージして解決してからプッシュ（複雑な場合）</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">CI/CDとブランチ戦略</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🚀 CI/CDとブランチ</h3>
+                            <p>npm runやデプロイコマンドは、実行したブランチの内容で動作します。</p>
+                            <div class="warning-box">
+                                <div class="warning-title">⚠️ 注意</div>
+                                本番デプロイ前には必ずmainブランチに切り替えましょう！
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🌿 ブランチ戦略の例</h3>
+                            <ul style="margin-top: 0.5rem;">
+                                <li><strong>main</strong> - 本番用の安定版</li>
+                                <li><strong>develop</strong> - 開発統合用</li>
+                                <li><strong>feature/*</strong> - 機能開発用</li>
+                                <li><strong>hotfix/*</strong> - 緊急修正用</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">⚠️ やってはいけないこと</h2>
+                    
+                    <div class="danger-box">
+                        <div class="danger-title">🚨 履歴の破壊</div>
+                        <ul style="margin-top: 0.5rem;">
+                            <li><strong>プッシュ済みコミットのrebase</strong> - 他の人の作業に影響</li>
+                            <li><strong>プッシュ済みコミットのreset --hard</strong> - 履歴が消失</li>
+                            <li><strong>強制プッシュ（--force）</strong> - チームメイトの変更を上書き</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-box">
+                        <div class="warning-title">⚠️ 注意が必要な操作</div>
+                        <ul style="margin-top: 0.5rem;">
+                            <li><strong>git pull</strong> - 自動マージが発生</li>
+                            <li><strong>git merge</strong> - コンフリクトの可能性</li>
+                            <li><strong>ブランチ切り替え</strong> - 未保存の変更が失われる可能性</li>
+                            <li><strong>git clean -f</strong> - 未追跡ファイルが完全削除</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-title">💡 安全な作業のコツ</div>
+                        <ul style="margin-top: 0.5rem;">
+                            <li>作業前に<code>git status</code>で状態確認</li>
+                            <li>重要な変更前にブランチを作成</li>
+                            <li><code>git stash</code>で一時的に変更を退避</li>
+                            <li>定期的にコミットして変更を保存</li>
+                            <li><code>--dry-run</code>オプションで事前確認</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">GitHub Pull Request の操作説明</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🌐 GitHubとGitの違い</h3>
+                            <p><strong>Git</strong>は分散バージョン管理システム、<strong>GitHub</strong>はGitリポジトリのホスティングサービスです。</p>
+                            <div class="info-box">
+                                <div class="info-title">💡 重要な違い</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li><strong>Git</strong>: コマンドライン操作、ローカルでの履歴管理</li>
+                                    <li><strong>GitHub</strong>: ウェブブラウザ操作、Pull Request、Issue管理</li>
+                                    <li><strong>Pull Request</strong>: GitHub固有の機能（Git自体にはない）</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>📝 Draft Pull Request（下書きPR）</h3>
+                            <p>作業途中のコードをレビュー対象外として作成できます。</p>
+                            <div class="info-box">
+                                <div class="info-title">日本語での意味</div>
+                                <ul style="margin-top: 0.5rem;">
+                                    <li><strong>Draft</strong> = 下書き、草案</li>
+                                    <li>完成前のコードを共有・バックアップとして使用</li>
+                                    <li>「Ready for review」ボタンで正式なPRに変更</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>👥 PR画面右側の設定項目</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                <div>
+                                    <h4>Reviewers（レビュワー）</h4>
+                                    <p>コードレビューを依頼する人を指定</p>
+                                </div>
+                                <div>
+                                    <h4>Assignees（担当者）</h4>
+                                    <p>PRの作業担当者を指定（通常は作成者）</p>
+                                </div>
+                                <div>
+                                    <h4>Labels（ラベル）</h4>
+                                    <p>PRの種類を分類（bug、feature、documentationなど）</p>
+                                </div>
+                                <div>
+                                    <h4>Projects（プロジェクト）</h4>
+                                    <p>このPRが属するプロジェクトボードを指定</p>
+                                </div>
+                                <div>
+                                    <h4>Milestone（マイルストーン）</h4>
+                                    <p>リリース計画やスプリントと関連付け</p>
+                                </div>
+                                <div>
+                                    <h4>Development（開発）</h4>
+                                    <p>関連するIssueとの紐付け</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🔀 マージボタンの3つの選択肢</h3>
+                            <div style="margin-top: 1rem;">
+                                <div style="border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background: #f8f9fa;">
+                                    <h4 style="color: #28a745; margin-bottom: 0.5rem;">Create a merge commit</h4>
+                                    <p style="margin-bottom: 0.5rem;"><strong>日本語：</strong> マージコミットを作成</p>
+                                    <p>ブランチの履歴を保持し、マージポイントが明確になります。</p>
+                                </div>
+                                
+                                <div style="border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background: #fff3cd;">
+                                    <h4 style="color: #856404; margin-bottom: 0.5rem;">Squash and merge</h4>
+                                    <p style="margin-bottom: 0.5rem;"><strong>日本語：</strong> スカッシュしてマージ</p>
+                                    <p>複数のコミットを1つにまとめて、きれいな履歴にします。</p>
+                                </div>
+                                
+                                <div style="border: 1px solid var(--border); border-radius: 6px; padding: 1rem; background: #d1ecf1;">
+                                    <h4 style="color: #0c5460; margin-bottom: 0.5rem;">Rebase and merge</h4>
+                                    <p style="margin-bottom: 0.5rem;"><strong>日本語：</strong> リベースしてマージ</p>
+                                    <p>ブランチのコミットを一直線の履歴として取り込みます。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>✅ レビューの状態表示</h3>
+                            <div style="margin-top: 1rem;">
+                                <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="background: #28a745; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; margin-right: 0.5rem;">✓ Approved</span>
+                                    <span>承認済み - マージ可能</span>
+                                </div>
+                                <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; margin-right: 0.5rem;">✗ Changes requested</span>
+                                    <span>変更要求 - 修正が必要</span>
+                                </div>
+                                <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="background: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; margin-right: 0.5rem;">👁 Review required</span>
+                                    <span>レビュー待ち</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🔍 その他のGitHub操作</h3>
+                            <div style="margin-top: 1rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <h4 style="color: var(--git-dark);">Files changed（変更ファイル）</h4>
+                                    <p>コードの差分を確認、行ごとにコメント可能</p>
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <h4 style="color: var(--git-dark);">Conversation（会話）</h4>
+                                    <p>PR全体に関する議論、質問、提案</p>
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <h4 style="color: var(--git-dark);">Checks（チェック）</h4>
+                                    <p>自動テスト、CI/CDの実行結果を表示</p>
+                                </div>
+                                <div>
+                                    <h4 style="color: var(--git-dark);">Close pull request（PR閉鎖）</h4>
+                                    <p>マージせずにPRを閉じる（作業中止時）</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🗑️ マージ後のブランチ管理</h3>
+                            <p><strong>なぜブランチを削除するのか？</strong></p>
+                            <p>PRでマージされると、featureブランチの内容はmainブランチに統合されるため、featureブランチは役目を終えて不要になります。</p>
+                            
+                            <div class="info-box">
+                                <div class="info-title">💡 マージ後の同期手順</div>
+                                <ol style="margin-top: 0.5rem;">
+                                    <li><code>git switch main</code> - mainブランチに戻る</li>
+                                    <li><code>git pull origin main</code> - リモートの最新（マージされた内容）をローカルに同期</li>
+                                    <li><code>git branch -d old-feature</code> - 古いfeatureブランチを削除</li>
+                                    <li><code>git switch -c new-feature</code> - 新しい作業用ブランチを作成</li>
+                                </ol>
+                            </div>
+
+                            <div class="warning-box">
+                                <div class="warning-title">⚠️ 重要</div>
+                                <p>GitHub上でブランチを削除しても、<strong>ローカルブランチは残ったまま</strong>です。手動で削除が必要です。</p>
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🔄 完全なPRワークフロー</h3>
+                            <div style="margin-top: 1rem;">
+                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 0.5rem;">
+                                    <strong>1. 作業開始</strong><br>
+                                    <code>git switch main && git pull origin main</code><br>
+                                    <code>git switch -c feature/login-system</code>
+                                </div>
+                                
+                                <div style="background: #e3f2fd; padding: 1rem; border-radius: 6px; margin-bottom: 0.5rem;">
+                                    <strong>2. 開発・PR作成</strong><br>
+                                    <code>git add . && git commit -m "Add login"</code><br>
+                                    <code>git push -u origin feature/login-system</code><br>
+                                    → GitHub上でPR作成
+                                </div>
+                                
+                                <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 0.5rem;">
+                                    <strong>3. マージ完了</strong><br>
+                                    GitHub上で「Merge pull request」<br>
+                                    → 「Delete branch」でリモートブランチ削除
+                                </div>
+                                
+                                <div style="background: #ffebee; padding: 1rem; border-radius: 6px;">
+                                    <strong>4. 次の作業準備</strong><br>
+                                    <code>git switch main</code><br>
+                                    <code>git pull origin main</code> ← <strong>これでマージされた内容を取得</strong><br>
+                                    <code>git branch -d feature/login-system</code><br>
+                                    <code>git switch -c feature/next-task</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-section">
+                        <h2 class="concept-title">⚠️ 履歴の破壊と危険な操作</h2>
+                        
+                        <div class="concept-grid">
+                            <div class="concept-card">
+                                <h3>🚨 git push --force の危険性</h3>
+                                <p><strong>最も危険な操作の一つ</strong>です。チーム開発では絶対に避けるべきです。</p>
+                                
+                                <div class="danger-box">
+                                    <div class="danger-title">💥 実際の被害例</div>
+                                    <ul style="margin-top: 0.5rem;">
+                                        <li><strong>チームメイトの作業が消失</strong> - 他の人がプッシュしたコミットが上書きされる</li>
+                                        <li><strong>リリース準備が台無し</strong> - 本番反映予定のコミットが消える</li>
+                                        <li><strong>コードレビューが無意味化</strong> - 承認済みコミットが勝手に変更される</li>
+                                        <li><strong>プロジェクト全体の停滞</strong> - 履歴復旧のため作業がストップ</li>
+                                    </ul>
+                                </div>
+
+                                <div class="warning-box">
+                                    <div class="warning-title">⚠️ --forceが実行される具体例</div>
+                                    <pre style="background: #2d3748; color: #e2e8f0; padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
+# 危険な操作例
+git rebase -i HEAD~3  # 過去3つのコミットを編集
+git push origin main  # エラー：履歴が合わない
+git push --force origin main  # 💥 強制プッシュ → 他の人の作業が消失</pre>
+                                </div>
+                            </div>
+
+                            <div class="concept-card">
+                                <h3>🛡️ 安全な代替手段</h3>
+                                
+                                <div class="info-box">
+                                    <div class="info-title">✅ git push --force-with-lease</div>
+                                    <p><strong>より安全な強制プッシュ</strong></p>
+                                    <ul style="margin-top: 0.5rem;">
+                                        <li>リモートが期待する状態と一致する場合のみ実行</li>
+                                        <li>他の人が先にプッシュしていたら失敗する（安全）</li>
+                                        <li>コマンド: <code>git push --force-with-lease</code></li>
+                                    </ul>
+                                </div>
+
+                                <div class="info-box">
+                                    <div class="info-title">✅ 事前確認のコマンド</div>
+                                    <pre style="background: #1a202c; color: #e2e8f0; padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
+# 安全確認の手順
+git fetch origin                    # リモートの最新状態を取得
+git log --oneline origin/main..HEAD # プッシュされる内容を確認
+git log --oneline HEAD..origin/main # リモートにある自分にない内容を確認</pre>
+                                </div>
+
+                                <div class="info-box">
+                                    <div class="info-title">✅ 安全な履歴修正方法</div>
+                                    <ul style="margin-top: 0.5rem;">
+                                        <li><strong>新しいコミットで修正</strong> - <code>git revert</code>を使用</li>
+                                        <li><strong>プッシュ前にのみ修正</strong> - ローカルでのみrebaseやreset</li>
+                                        <li><strong>新しいブランチで作り直し</strong> - 問題のあるブランチは放棄</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="concept-grid">
+                            <div class="concept-card">
+                                <h3>📚 履歴破壊の具体的事例</h3>
+                                
+                                <div class="danger-box">
+                                    <div class="danger-title">事例1: リベース後の強制プッシュ</div>
+                                    <p><strong>状況:</strong> Aさんがコミット履歴をきれいにするためにrebaseを実行し、--forceでプッシュ</p>
+                                    <p><strong>結果:</strong> Bさんが同時進行で作業していたコミットが消失</p>
+                                    <p><strong>影響:</strong> Bさんは1日分の作業をやり直すことになった</p>
+                                </div>
+
+                                <div class="danger-box">
+                                    <div class="danger-title">事例2: reset --hard後の強制プッシュ</div>
+                                    <p><strong>状況:</strong> 「間違ったコミットを取り消したい」と思い、reset --hardを実行後に--forceでプッシュ</p>
+                                    <p><strong>結果:</strong> チーム全体の最新コミット3つが履歴から消失</p>
+                                    <p><strong>影響:</strong> リリース直前だったため、プロジェクト全体が1週間遅延</p>
+                                </div>
+
+                                <div class="danger-box">
+                                    <div class="danger-title">事例3: mainブランチでの強制プッシュ</div>
+                                    <p><strong>状況:</strong> mainブランチで直接作業し、エラーが出たため--forceでプッシュ</p>
+                                    <p><strong>結果:</strong> 本番環境に反映済みのコミットが改変される</p>
+                                    <p><strong>影響:</strong> 本番とリポジトリの整合性が取れなくなり、緊急メンテナンス実施</p>
+                                </div>
+                            </div>
+
+                            <div class="concept-card">
+                                <h3>🔧 安全な作業のためのルール</h3>
+                                
+                                <div class="info-box">
+                                    <div class="info-title">✅ 推奨されるプラクティス</div>
+                                    <ul style="margin-top: 0.5rem;">
+                                        <li><strong>mainブランチでは直接作業しない</strong></li>
+                                        <li><strong>プッシュ済みコミットは修正しない</strong></li>
+                                        <li><strong>強制プッシュ前に必ずチームに確認</strong></li>
+                                        <li><strong>--force-with-leaseを使用</strong></li>
+                                        <li><strong>定期的にgit fetchで最新状態を確認</strong></li>
+                                    </ul>
+                                </div>
+
+                                <div class="warning-box">
+                                    <div class="warning-title">⚠️ 緊急時の対処法</div>
+                                    <p><strong>もし履歴を破壊してしまったら:</strong></p>
+                                    <ol style="margin-top: 0.5rem;">
+                                        <li><strong>すぐにチームに報告</strong> - 隠さず早急に共有</li>
+                                        <li><strong>git reflogで履歴を確認</strong> - 消えたコミットを探す</li>
+                                        <li><strong>バックアップから復旧</strong> - 他のメンバーのローカルリポジトリから復旧</li>
+                                        <li><strong>今後の対策を検討</strong> - ブランチ保護設定やレビュー体制の見直し</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-section">
+                        <h2 class="concept-title">🛡️ 履歴破壊の仕組みと対策</h2>
+                        
+                        <div class="concept-grid">
+                            <div class="concept-card">
+                                <h3>💡 履歴破壊の仕組み（シンプル版）</h3>
+                                
+                                <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1.5rem; margin: 1rem 0;">
+                                    <h4 style="color: #1976d2; margin-bottom: 1rem;">📋 2ステップで理解する履歴破壊</h4>
+                                    
+                                    <div style="background: #fff3e0; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                        <h5 style="color: #f57c00; margin-bottom: 0.5rem;">ステップ1: リモートプッシュ後にローカルで履歴操作</h5>
+                                        <p><strong>これがまず問題</strong> - プッシュ済み履歴をローカルで書き換えると「ズレ」が発生</p>
+                                        <p style="font-family: monospace; background: #fff8e1; padding: 0.5rem; margin-top: 0.5rem; border-radius: 4px;">
+                                            リモート: A→B→C→D<br>
+                                            ローカル: A→B→C'→D' （rebaseやresetで変更）
+                                        </p>
+                                    </div>
+                                    
+                                    <div style="background: #ffebee; padding: 1rem; border-radius: 6px;">
+                                        <h5 style="color: #d32f2f; margin-bottom: 0.5rem;">ステップ2: それを再度プッシュすると履歴が破壊される</h5>
+                                        <p><strong>--forceで強制プッシュ</strong> → リモートの元の履歴C,Dが消失し、他の人の作業と矛盾</p>
+                                        <p style="font-family: monospace; background: #ffebee; padding: 0.5rem; margin-top: 0.5rem; border-radius: 4px;">
+                                            git push --force → 💥 C,Dが消えて他の人が困る
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="danger-box">
+                                    <div class="danger-title">⚡ 結論</div>
+                                    <p><strong>「プッシュした履歴は触らない」</strong> - これが絶対ルール</p>
+                                </div>
+                            </div>
+
+                            <div class="concept-card">
+                                <h3>🔒 危険操作を禁止する方法</h3>
+                                
+                                <div class="info-box">
+                                    <div class="info-title">✅ GitHub Branch Protection（推奨）</div>
+                                    <p><strong>Settings → Branches → Add rule</strong></p>
+                                    <ul style="margin-top: 0.5rem;">
+                                        <li>☑️ <strong>Do not allow force pushes</strong> ← これで解決！</li>
+                                        <li>☑️ <strong>Do not allow deletions</strong></li>
+                                        <li>☑️ <strong>Require pull request reviews</strong></li>
+                                    </ul>
+                                </div>
+
+                                <div class="warning-box">
+                                    <div class="warning-title">⚠️ 設定後</div>
+                                    <p><code>git push --force</code> → <strong>「force push is not allowed」</strong>エラーで実行不可</p>
+                                </div>
+                            </div>
+                        </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-title">💡 日本人開発者のためのGitHub用語集</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                            <div>
+                                <ul style="margin: 0;">
+                                    <li><strong>Fork</strong> = フォーク（複製）</li>
+                                    <li><strong>Clone</strong> = クローン（複製）</li>
+                                    <li><strong>Pull Request</strong> = プルリクエスト（取り込み要求）</li>
+                                    <li><strong>Merge</strong> = マージ（統合）</li>
+                                    <li><strong>Commit</strong> = コミット（変更の記録）</li>
+                                    <li><strong>Delete branch</strong> = ブランチを削除</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <ul style="margin: 0;">
+                                    <li><strong>Branch</strong> = ブランチ（枝、分岐）</li>
+                                    <li><strong>Issue</strong> = イシュー（課題、問題）</li>
+                                    <li><strong>Release</strong> = リリース（公開）</li>
+                                    <li><strong>Tag</strong> = タグ（目印）</li>
+                                    <li><strong>Repository</strong> = リポジトリ（保管庫）</li>
+                                    <li><strong>Force push</strong> = 強制プッシュ</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- よく使うワークフロータブ -->
+            <div id="workflows" class="tab-content">
+                <div class="workflow-section">
+                    <h2 class="workflow-title">よく使うワークフロー</h2>
+                    <div class="workflow-grid">
+                        <div class="workflow-card">
+                            <h3>初回セットアップ</h3>
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-command">git config --global user.name "Your Name"</div>
+                                    <div class="step-desc">ユーザー名を設定</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-command">git config --global user.email "email@example.com"</div>
+                                    <div class="step-desc">メールアドレスを設定</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-command">git init</div>
+                                    <div class="step-desc">リポジトリを初期化</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="workflow-card">
+                            <h3>基本的な作業フロー</h3>
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-command">git status</div>
+                                    <div class="step-desc">変更状況を確認</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-command">git add .</div>
+                                    <div class="step-desc">変更をステージング</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-command">git commit -m "commit message"</div>
+                                    <div class="step-desc">変更をコミット</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <div class="step-command">git push origin main</div>
+                                    <div class="step-desc">リモートにプッシュ</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="workflow-card">
+                            <h3>ブランチ作業</h3>
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-command">git switch -c feature/new-feature</div>
+                                    <div class="step-desc">新しいブランチを作成して切り替え</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-command">git add . && git commit -m "Add new feature"</div>
+                                    <div class="step-desc">変更をコミット</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-command">git push -u origin feature/new-feature</div>
+                                    <div class="step-desc">ブランチをプッシュ</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <div class="step-command">GitHub画面でPR作成</div>
+                                    <div class="step-desc">プルリクエストを作成</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="workflow-card">
+                            <h3>リモート連携</h3>
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-command">git clone https://github.com/user/repo.git</div>
+                                    <div class="step-desc">リポジトリをクローン</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-command">git pull origin main</div>
+                                    <div class="step-desc">最新の変更を取得</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-command">git push -u origin feature-branch</div>
+                                    <div class="step-desc">新しいブランチをプッシュ</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="workflow-card">
+                            <h3>マージとクリーンアップ</h3>
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-command">git switch main</div>
+                                    <div class="step-desc">mainブランチに切り替え</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-command">git pull origin main</div>
+                                    <div class="step-desc">最新の変更を取得</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-command">git branch -d feature/old-feature</div>
+                                    <div class="step-desc">不要なブランチを削除</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="workflow-card">
+                            <h3>緊急対応フロー</h3>
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-command">git stash</div>
+                                    <div class="step-desc">現在の作業を一時退避</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-command">git switch -c hotfix/urgent-fix</div>
+                                    <div class="step-desc">緊急修正ブランチを作成</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-command">修正 → commit → push</div>
+                                    <div class="step-desc">修正してプッシュ</div>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <div class="step-command">git switch - && git stash pop</div>
+                                    <div class="step-desc">元のブランチに戻って作業再開</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- コマンドリファレンスタブ -->
+            <div id="commands" class="tab-content">
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="search" id="searchInput" placeholder="コマンド名、説明、カテゴリで検索...">
+                    </div>
+                    <div class="filters">
+                        <div class="filter-group">
+                            <span class="filter-label">カテゴリ:</span>
+                            <select id="categoryFilter">
+                                <option value="">すべて</option>
+                                <option value="basic">基本操作</option>
+                                <option value="branch">ブランチ管理</option>
+                                <option value="remote">リモート操作</option>
+                                <option value="history">履歴管理</option>
+                                <option value="advanced">高度な操作</option>
+                                <option value="config">設定</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">使用頻度:</span>
+                            <select id="frequencyFilter">
+                                <option value="">すべて</option>
+                                <option value="high">よく使う</option>
+                                <option value="medium">時々使う</option>
+                                <option value="low">たまに使う</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="quick-filters">
+                        <span class="quick-filter" onclick="setQuickFilter('beginner')">初心者向け</span>
+                        <span class="quick-filter" onclick="setQuickFilter('troubleshoot')">トラブル対応</span>
+                        <span class="quick-filter" onclick="setQuickFilter('undo')">取り消し系</span>
+                        <span class="quick-filter" onclick="setQuickFilter('collaboration')">共同作業</span>
+                    </div>
+                </div>
+
+                <div class="command-grid" id="commandGrid">
+                    <!-- コマンドカードはJavaScriptで動的生成 -->
+                </div>
+
+                <div class="not-found" id="notFound" style="display: none;">
+                    <p>検索条件に一致するコマンドが見つかりませんでした。</p>
+                </div>
+            </div>
+
+            <!-- トラブル対応タブ -->
+            <div id="troubleshooting" class="tab-content">
+                <div class="concept-section">
+                    <h2 class="concept-title">よくあるトラブルと対処法</h2>
+                    
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <h3>🔄 間違ってコミットした</h3>
+                            <div class="warning-box">
+                                <div class="warning-title">プッシュ前の場合</div>
+                                <code>git reset --soft HEAD~1</code><br>
+                                最後のコミットを取り消し（変更は保持）
+                            </div>
+                            <div class="info-box">
+                                <div class="info-title">プッシュ後の場合</div>
+                                <code>git revert HEAD</code><br>
+                                打ち消すための新しいコミットを作成
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🔀 マージコンフリクトが発生</h3>
+                            <ol style="margin-top: 0.5rem;">
+                                <li>エディタでコンフリクトファイルを開く</li>
+                                <li>&lt;&lt;&lt;, ===, &gt;&gt;&gt; マーカーを削除</li>
+                                <li>正しい内容に編集</li>
+                                <li><code>git add ファイル名</code></li>
+                                <li><code>git commit</code></li>
+                            </ol>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>📂 間違ったブランチで作業</h3>
+                            <div class="info-box">
+                                <div class="info-title">まだコミットしていない場合</div>
+                                <code>git stash</code><br>
+                                <code>git switch correct-branch</code><br>
+                                <code>git stash pop</code>
+                            </div>
+                            <div class="warning-box">
+                                <div class="warning-title">コミット済みの場合</div>
+                                <code>git cherry-pick commit-hash</code><br>
+                                特定のコミットを別ブランチに適用
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🚫 プッシュが拒否される</h3>
+                            <div class="info-box">
+                                <div class="info-title">原因：リモートに新しい變更</div>
+                                <code>git pull origin main</code><br>
+                                <code>git push origin main</code><br>
+                                まずは最新を取得してからプッシュ
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>💾 変更を一時的に退避したい</h3>
+                            <div class="info-box">
+                                <div class="info-title">stashを活用</div>
+                                <code>git stash</code> - 退避<br>
+                                <code>git stash pop</code> - 復元<br>
+                                <code>git stash list</code> - 一覧表示
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <h3>🗑️ 間違ってファイルを削除</h3>
+                            <div class="info-box">
+                                <div class="info-title">コミット前の場合</div>
+                                <code>git checkout -- ファイル名</code><br>
+                                または<br>
+                                <code>git restore ファイル名</code>
+                            </div>
+                            <div class="warning-box">
+                                <div class="warning-title">コミット後の場合</div>
+                                <code>git show HEAD~1:ファイル名 > ファイル名</code><br>
+                                過去のコミットからファイルを復元
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-section">
+                    <h2 class="concept-title">緊急時の対処法</h2>
+                    
+                    <div class="danger-box">
+                        <div class="danger-title">🚨 全てを元に戻したい</div>
+                        <p><strong>最終手段：</strong></p>
+                        <code>git reflog</code> でHEADの移動履歴を確認<br>
+                        <code>git reset --hard HEAD@{番号}</code> で特定の状態に戻る
+                    </div>
+
+                    <div class="warning-box">
+                        <div class="warning-title">⚠️ プッシュを強制したい</div>
+                        <p><strong>危険！チーム開発では避ける：</strong></p>
+                        <code>git push --force-with-lease</code><br>
+                        --force-with-leaseの方が--forceより安全
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-title">💡 安全確認のコマンド</div>
+                        <ul style="margin-top: 0.5rem;">
+                            <li><code>git status</code> - 現在の状態</li>
+                            <li><code>git log --oneline -5</code> - 最近のコミット</li>
+                            <li><code>git branch -a</code> - 全ブランチ</li>
+                            <li><code>git remote -v</code> - リモートURL</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Git コマンドの完全なデータ（省略版 - 重要なコマンドのみ表示）
+        const gitCommands = [
+            // 基本操作
+            {
+                command: 'git init',
+                category: 'basic',
+                frequency: 'high',
+                description: 'Gitリポジトリを初期化する',
+                tags: ['beginner', 'setup'],
+                examples: [
+                    { code: 'git init', desc: '現在のディレクトリをGitリポジトリとして初期化' },
+                    { code: 'git init my-project', desc: '新しいディレクトリを作成してGitリポジトリとして初期化' }
+                ],
+                options: [
+                    { name: '--bare', desc: 'ベアリポジトリを作成' },
+                    { name: '--template', desc: 'テンプレートディレクトリを指定' }
+                ],
+                related: ['git clone', 'git config'],
+                hints: [{ type: 'usage', text: 'プロジェクトの開始時に一度だけ実行' }]
+            },
+            {
+                command: 'git clone',
+                category: 'basic',
+                frequency: 'high',
+                description: 'リモートリポジトリをローカルにコピーする',
+                tags: ['beginner', 'remote'],
+                examples: [
+                    { code: 'git clone https://github.com/user/repo.git', desc: 'HTTPSでリポジトリをクローン' },
+                    { code: 'git clone --depth 1 https://github.com/user/repo.git', desc: '最新コミットのみをクローン（shallow clone）' }
+                ],
+                options: [
+                    { name: '--depth', desc: '指定した深さまでの履歴のみ取得' },
+                    { name: '-b, --branch', desc: '特定のブランチをクローン' }
+                ],
+                related: ['git pull', 'git fetch', 'git remote'],
+                hints: [{ type: 'usage', text: '--depth 1で大きなリポジトリの取得時間を短縮' }]
+            },
+            {
+                command: 'git status',
+                category: 'basic',
+                frequency: 'high',
+                description: 'ワーキングディレクトリとステージングエリアの状態を表示',
+                tags: ['beginner', 'troubleshoot'],
+                examples: [
+                    { code: 'git status', desc: '詳細な状態情報を表示' },
+                    { code: 'git status -s', desc: '短縮形式で状態を表示' }
+                ],
+                options: [
+                    { name: '-s, --short', desc: '短縮形式で出力' },
+                    { name: '--porcelain', desc: 'スクリプト処理向けの形式' }
+                ],
+                related: ['git diff', 'git add', 'git commit'],
+                hints: [{ type: 'usage', text: '作業前後に必ず確認する習慣をつける' }]
+            },
+            {
+                command: 'git add',
+                category: 'basic',
+                frequency: 'high',
+                description: 'ファイルをステージングエリアに追加',
+                tags: ['beginner'],
+                examples: [
+                    { code: 'git add file.txt', desc: '特定のファイルをステージング' },
+                    { code: 'git add .', desc: '現在のディレクトリ以下の変更をすべてステージング' },
+                    { code: 'git add -p', desc: '対話的に変更の一部をステージング' }
+                ],
+                options: [
+                    { name: '-A, --all', desc: 'すべての変更をステージング' },
+                    { name: '-p, --patch', desc: '対話的にステージング' }
+                ],
+                related: ['git commit', 'git reset', 'git rm'],
+                hints: [{ type: 'usage', text: 'git add -pで変更の一部のみをコミット可能' }]
+            },
+            {
+                command: 'git commit',
+                category: 'basic',
+                frequency: 'high',
+                description: 'ステージングされた変更をリポジトリに記録',
+                tags: ['beginner'],
+                examples: [
+                    { code: 'git commit -m "Add new feature"', desc: 'メッセージ付きでコミット' },
+                    { code: 'git commit -am "Fix bug"', desc: '追跡済みファイルを自動ステージングしてコミット' },
+                    { code: 'git commit --amend', desc: '最後のコミットを修正' }
+                ],
+                options: [
+                    { name: '-m, --message', desc: 'コミットメッセージを指定' },
+                    { name: '-a, --all', desc: '追跡済みファイルを自動ステージング' },
+                    { name: '--amend', desc: '最後のコミットを修正' }
+                ],
+                related: ['git add', 'git push', 'git reset'],
+                hints: [
+                    { type: 'usage', text: 'コミットメッセージは現在形で明確に記述' },
+                    { type: 'usage', text: '--amendは公開前のコミットのみに使用' }
+                ]
+            },
+            {
+                command: 'git push',
+                category: 'remote',
+                frequency: 'high',
+                description: 'ローカルの変更をリモートリポジトリに送信',
+                tags: ['beginner', 'remote'],
+                examples: [
+                    { code: 'git push origin main', desc: 'mainブランチをoriginリモートにプッシュ' },
+                    { code: 'git push -u origin feature-branch', desc: '新しいブランチをプッシュしてトラッキング設定' }
+                ],
+                options: [
+                    { name: '-u, --set-upstream', desc: 'アップストリームブランチを設定' },
+                    { name: '--force-with-lease', desc: 'より安全な強制プッシュ' }
+                ],
+                related: ['git pull', 'git fetch', 'git remote'],
+                hints: [
+                    { type: 'usage', text: '初回プッシュ時は-uオプションでトラッキング設定' },
+                    { type: 'danger', text: '強制プッシュは履歴を破壊する可能性があるため注意' }
+                ]
+            },
+            {
+                command: 'git pull',
+                category: 'remote',
+                frequency: 'high',
+                description: 'リモートリポジトリから変更を取得してマージ',
+                tags: ['beginner', 'remote'],
+                examples: [
+                    { code: 'git pull', desc: 'デフォルトリモートから現在のブランチに取得・マージ' },
+                    { code: 'git pull --rebase', desc: 'リベースでマージ' }
+                ],
+                options: [
+                    { name: '--rebase', desc: 'マージの代わりにリベース' },
+                    { name: '--no-commit', desc: 'マージ後に自動コミットしない' }
+                ],
+                related: ['git fetch', 'git merge', 'git push'],
+                hints: [
+                    { type: 'usage', text: 'git pull = git fetch + git merge' },
+                    { type: 'usage', text: '--rebaseオプションで履歴を線形に保つ' }
+                ]
+            },
+            // ブランチ管理
+            {
+                command: 'git branch',
+                category: 'branch',
+                frequency: 'high',
+                description: 'ブランチの一覧表示・作成・削除',
+                tags: ['beginner', 'branch'],
+                examples: [
+                    { code: 'git branch', desc: 'ローカルブランチ一覧を表示' },
+                    { code: 'git branch -a', desc: 'ローカルとリモートのブランチ一覧' },
+                    { code: 'git branch feature-login', desc: '新しいブランチを作成' },
+                    { code: 'git branch -d feature-login', desc: 'ブランチを削除' }
+                ],
+                options: [
+                    { name: '-a, --all', desc: 'すべてのブランチを表示' },
+                    { name: '-d, --delete', desc: 'ブランチを削除' },
+                    { name: '-m, --move', desc: 'ブランチ名を変更' }
+                ],
+                related: ['git checkout', 'git switch', 'git merge'],
+                hints: [{ type: 'usage', text: '-dは安全な削除、-Dは強制削除' }]
+            },
+            {
+                command: 'git switch',
+                category: 'branch',
+                frequency: 'high',
+                description: 'ブランチの切り替え（Git 2.23以降）',
+                tags: ['branch'],
+                examples: [
+                    { code: 'git switch main', desc: 'mainブランチに切り替え' },
+                    { code: 'git switch -c feature-auth', desc: '新しいブランチを作成して切り替え' },
+                    { code: 'git switch -', desc: '前のブランチに戻る' }
+                ],
+                options: [
+                    { name: '-c, --create', desc: '新しいブランチを作成して切り替え' },
+                    { name: '-f, --force', desc: '強制的に切り替え' }
+                ],
+                related: ['git checkout', 'git branch', 'git restore'],
+                hints: [{ type: 'usage', text: 'checkoutよりも明確でブランチ操作専用' }]
+            },
+            {
+                command: 'git merge',
+                category: 'branch',
+                frequency: 'high',
+                description: 'ブランチをマージする',
+                tags: ['branch', 'collaboration'],
+                examples: [
+                    { code: 'git merge feature-branch', desc: 'feature-branchを現在のブランチにマージ' },
+                    { code: 'git merge --no-ff feature-branch', desc: 'ファストフォワードを無効にしてマージ' },
+                    { code: 'git merge --abort', desc: 'マージを中止' }
+                ],
+                options: [
+                    { name: '--no-ff', desc: 'ファストフォワードを無効化' },
+                    { name: '--abort', desc: 'マージを中止' }
+                ],
+                related: ['git rebase', 'git pull', 'git branch'],
+                hints: [
+                    { type: 'usage', text: '--no-ffでマージ履歴を明確に保持' },
+                    { type: 'usage', text: 'コンフリクト時は手動解決後にgit add → git commit' }
+                ]
+            },
+            // その他重要なコマンド
+            {
+                command: 'git log',
+                category: 'history',
+                frequency: 'high',
+                description: 'コミット履歴を表示',
+                tags: ['history', 'troubleshoot'],
+                examples: [
+                    { code: 'git log --oneline', desc: '1行でコミット履歴を表示' },
+                    { code: 'git log --graph --oneline --all', desc: 'グラフ表示ですべてのブランチの履歴' }
+                ],
+                options: [
+                    { name: '--oneline', desc: '1行で表示' },
+                    { name: '--graph', desc: 'ブランチをグラフ表示' },
+                    { name: '--all', desc: 'すべてのブランチを表示' }
+                ],
+                related: ['git show', 'git diff', 'git blame'],
+                hints: [{ type: 'usage', text: '--graph --oneline --allでブランチ構造を視覚化' }]
+            },
+            {
+                command: 'git diff',
+                category: 'basic',
+                frequency: 'high',
+                description: '変更内容の差分を表示',
+                tags: ['troubleshoot'],
+                examples: [
+                    { code: 'git diff', desc: 'ワーキングディレクトリとインデックスの差分' },
+                    { code: 'git diff --cached', desc: 'インデックスとHEADの差分' }
+                ],
+                options: [
+                    { name: '--cached', desc: 'ステージングエリアとの差分' },
+                    { name: '--stat', desc: '統計情報のみ表示' }
+                ],
+                related: ['git status', 'git show', 'git log -p'],
+                hints: [{ type: 'usage', text: 'コミット前に必ず変更内容を確認' }]
+            },
+            {
+                command: 'git stash',
+                category: 'advanced',
+                frequency: 'medium',
+                description: '作業中の変更を一時保存',
+                tags: ['troubleshoot'],
+                examples: [
+                    { code: 'git stash', desc: '現在の変更を一時保存' },
+                    { code: 'git stash pop', desc: '一時保存した変更を復元して削除' },
+                    { code: 'git stash list', desc: '一時保存の一覧を表示' }
+                ],
+                options: [
+                    { name: 'push', desc: '変更を一時保存' },
+                    { name: 'pop', desc: '復元して削除' },
+                    { name: 'list', desc: '一覧表示' }
+                ],
+                related: ['git commit', 'git checkout'],
+                hints: [{ type: 'usage', text: 'ブランチ切り替え前の未コミット変更の退避に便利' }]
+            },
+            {
+                command: 'git reset',
+                category: 'advanced',
+                frequency: 'medium',
+                description: 'HEADとインデックスを移動',
+                tags: ['undo', 'advanced', 'troubleshoot'],
+                examples: [
+                    { code: 'git reset HEAD~1', desc: '最後のコミットを取り消し（変更は保持）' },
+                    { code: 'git reset --hard HEAD~1', desc: '最後のコミットを完全に削除' },
+                    { code: 'git reset --soft HEAD~1', desc: 'コミットのみ取り消し（ステージングは保持）' }
+                ],
+                options: [
+                    { name: '--soft', desc: 'HEADのみ移動' },
+                    { name: '--mixed', desc: 'HEADとインデックスを移動（デフォルト）' },
+                    { name: '--hard', desc: 'HEADとインデックス、ワーキングディレクトリを移動' }
+                ],
+                related: ['git revert', 'git checkout', 'git restore'],
+                hints: [
+                    { type: 'danger', text: '--hardは変更を完全に削除するため注意' },
+                    { type: 'usage', text: '公開済みコミットのresetは避ける' }
+                ]
+            },
+            {
+                command: 'git revert',
+                category: 'advanced',
+                frequency: 'medium',
+                description: 'コミットを打ち消す新しいコミットを作成',
+                tags: ['undo', 'collaboration'],
+                examples: [
+                    { code: 'git revert HEAD', desc: '最後のコミットを打ち消し' },
+                    { code: 'git revert HEAD~3', desc: '4つ前のコミットを打ち消し' }
+                ],
+                options: [
+                    { name: '--no-commit', desc: '自動でコミットしない' },
+                    { name: '-m, --mainline', desc: 'マージコミット用の親番号' }
+                ],
+                related: ['git reset', 'git cherry-pick'],
+                hints: [{ type: 'usage', text: '履歴を改変せずに変更を取り消すため共有リポジトリに安全' }]
+            },
+            {
+                command: 'git config',
+                category: 'config',
+                frequency: 'medium',
+                description: 'Gitの設定を管理',
+                tags: ['config', 'setup'],
+                examples: [
+                    { code: 'git config --global user.name "Your Name"', desc: 'グローバルユーザー名を設定' },
+                    { code: 'git config --global user.email "email@example.com"', desc: 'グローバルメールアドレスを設定' },
+                    { code: 'git config --list', desc: 'すべての設定を表示' }
+                ],
+                options: [
+                    { name: '--global', desc: 'グローバル設定' },
+                    { name: '--local', desc: 'ローカル設定' },
+                    { name: '--list', desc: '設定一覧を表示' }
+                ],
+                related: ['git init', 'git clone'],
+                hints: [{ type: 'usage', text: '初回セットアップ時にuser.nameとuser.emailは必須' }]
+            },
+            // 追加コマンド - リモート操作
+            {
+                command: 'git fetch',
+                category: 'remote',
+                frequency: 'medium',
+                description: 'リモートリポジトリから変更を取得（マージはしない）',
+                tags: ['remote'],
+                examples: [
+                    { code: 'git fetch', desc: 'デフォルトリモートから変更を取得' },
+                    { code: 'git fetch origin', desc: 'originリモートから変更を取得' },
+                    { code: 'git fetch --all', desc: 'すべてのリモートから取得' },
+                    { code: 'git fetch --prune', desc: '削除されたリモートブランチの参照を削除' }
+                ],
+                options: [
+                    { name: '--all', desc: 'すべてのリモートから取得' },
+                    { name: '--prune', desc: '削除されたブランチ参照を削除' },
+                    { name: '--tags', desc: 'タグも取得' },
+                    { name: '--depth', desc: '取得する履歴の深さを制限' }
+                ],
+                related: ['git pull', 'git merge', 'git remote'],
+                hints: [{ type: 'usage', text: 'マージ前に変更内容を確認したい場合に使用' }]
+            },
+            {
+                command: 'git remote',
+                category: 'remote',
+                frequency: 'medium',
+                description: 'リモートリポジトリを管理',
+                tags: ['remote'],
+                examples: [
+                    { code: 'git remote -v', desc: 'リモートリポジトリ一覧とURLを表示' },
+                    { code: 'git remote add origin https://github.com/user/repo.git', desc: 'originリモートを追加' },
+                    { code: 'git remote set-url origin git@github.com:user/repo.git', desc: 'リモートURLを変更' },
+                    { code: 'git remote remove origin', desc: 'リモートを削除' },
+                    { code: 'git remote rename origin upstream', desc: 'リモート名を変更' }
+                ],
+                options: [
+                    { name: '-v, --verbose', desc: 'URLも表示' },
+                    { name: 'add', desc: 'リモートを追加' },
+                    { name: 'remove', desc: 'リモートを削除' },
+                    { name: 'set-url', desc: 'リモートURLを変更' },
+                    { name: 'rename', desc: 'リモート名を変更' },
+                    { name: 'show', desc: 'リモートの詳細情報' }
+                ],
+                related: ['git clone', 'git push', 'git pull'],
+                hints: [{ type: 'usage', text: 'originは慣例的にメインリモートリポジトリの名前' }]
+            },
+            // ブランチ・切り替え操作
+            {
+                command: 'git checkout',
+                category: 'branch',
+                frequency: 'high',
+                description: 'ブランチ切り替えやファイルの復元',
+                tags: ['beginner', 'branch', 'undo'],
+                examples: [
+                    { code: 'git checkout main', desc: 'mainブランチに切り替え' },
+                    { code: 'git checkout -b feature-user', desc: '新しいブランチを作成して切り替え' },
+                    { code: 'git checkout -- file.txt', desc: 'ファイルの変更を取り消し' },
+                    { code: 'git checkout HEAD~1 -- file.txt', desc: '特定のコミットからファイルを復元' },
+                    { code: 'git checkout -', desc: '前のブランチに戻る' }
+                ],
+                options: [
+                    { name: '-b', desc: '新しいブランチを作成して切り替え' },
+                    { name: '-f, --force', desc: '強制的に切り替え' },
+                    { name: '-', desc: '前のブランチに切り替え' },
+                    { name: '--', desc: 'ファイル復元モード' }
+                ],
+                related: ['git switch', 'git restore', 'git branch'],
+                hints: [
+                    { type: 'usage', text: 'Git 2.23以降はswitchとrestoreの使用を推奨' },
+                    { type: 'danger', text: 'ファイル復元は変更を完全に削除するため注意' }
+                ]
+            },
+            {
+                command: 'git restore',
+                category: 'basic',
+                frequency: 'medium',
+                description: 'ファイルの復元（Git 2.23以降）',
+                tags: ['undo'],
+                examples: [
+                    { code: 'git restore file.txt', desc: 'ワーキングディレクトリのファイルを復元' },
+                    { code: 'git restore --staged file.txt', desc: 'ステージングエリアからファイルを除外' },
+                    { code: 'git restore --source=HEAD~1 file.txt', desc: '特定のコミットからファイルを復元' },
+                    { code: 'git restore .', desc: 'すべてのファイルを復元' }
+                ],
+                options: [
+                    { name: '--staged', desc: 'ステージングエリアから除外' },
+                    { name: '--worktree', desc: 'ワーキングディレクトリを復元' },
+                    { name: '--source', desc: '復元元のコミットを指定' }
+                ],
+                related: ['git checkout', 'git reset', 'git revert'],
+                hints: [{ type: 'usage', text: 'checkoutの代替として導入された新しいコマンド' }]
+            },
+            // ファイル操作
+            {
+                command: 'git rm',
+                category: 'basic',
+                frequency: 'medium',
+                description: 'ファイルを削除してステージング',
+                tags: [],
+                examples: [
+                    { code: 'git rm file.txt', desc: 'ファイルを削除してステージング' },
+                    { code: 'git rm --cached file.txt', desc: 'ファイルをインデックスからのみ削除' },
+                    { code: 'git rm -r directory/', desc: 'ディレクトリを再帰的に削除' },
+                    { code: 'git rm "*.txt"', desc: 'パターンマッチでファイル削除' }
+                ],
+                options: [
+                    { name: '--cached', desc: 'インデックスからのみ削除' },
+                    { name: '-r', desc: '再帰的に削除' },
+                    { name: '-f, --force', desc: '強制削除' },
+                    { name: '--dry-run', desc: '削除対象を表示のみ' }
+                ],
+                related: ['git add', 'git mv'],
+                hints: [{ type: 'usage', text: '--cachedで.gitignoreに追加済みファイルをトラッキング解除' }]
+            },
+            {
+                command: 'git mv',
+                category: 'basic',
+                frequency: 'medium',
+                description: 'ファイルを移動・リネーム',
+                tags: [],
+                examples: [
+                    { code: 'git mv old-file.txt new-file.txt', desc: 'ファイル名を変更' },
+                    { code: 'git mv file.txt directory/', desc: 'ファイルをディレクトリに移動' },
+                    { code: 'git mv directory/ new-directory/', desc: 'ディレクトリ名を変更' }
+                ],
+                options: [
+                    { name: '-f, --force', desc: '既存ファイルを上書き' },
+                    { name: '-k', desc: 'エラー時も続行' },
+                    { name: '-n, --dry-run', desc: '実行せずに確認のみ' }
+                ],
+                related: ['git rm', 'git add'],
+                hints: [{ type: 'usage', text: 'Gitが移動を正しく認識するため推奨' }]
+            },
+            {
+                command: 'git clean',
+                category: 'basic',
+                frequency: 'medium',
+                description: '未追跡ファイルを削除',
+                tags: ['cleanup'],
+                examples: [
+                    { code: 'git clean -n', desc: '削除対象ファイルを確認' },
+                    { code: 'git clean -f', desc: '未追跡ファイルを削除' },
+                    { code: 'git clean -fd', desc: '未追跡ファイルとディレクトリを削除' },
+                    { code: 'git clean -fx', desc: '.gitignoreファイルも削除' }
+                ],
+                options: [
+                    { name: '-n, --dry-run', desc: '削除対象を表示のみ' },
+                    { name: '-f, --force', desc: '強制削除' },
+                    { name: '-d', desc: 'ディレクトリも削除' },
+                    { name: '-x', desc: '.gitignoreファイルも削除' },
+                    { name: '-i, --interactive', desc: '対話的に削除' }
+                ],
+                related: ['git reset', 'git checkout'],
+                hints: [
+                    { type: 'usage', text: '必ず-nで確認してから実行' },
+                    { type: 'danger', text: '削除されたファイルは復元不可能' }
+                ]
+            },
+            // 履歴・検索操作
+            {
+                command: 'git show',
+                category: 'history',
+                frequency: 'medium',
+                description: '特定のコミットの詳細を表示',
+                tags: ['history'],
+                examples: [
+                    { code: 'git show', desc: '最新コミットの詳細を表示' },
+                    { code: 'git show HEAD~2', desc: '2つ前のコミットの詳細' },
+                    { code: 'git show --name-only HEAD', desc: '変更されたファイル名のみ表示' },
+                    { code: 'git show HEAD:file.txt', desc: '特定コミットでのファイル内容' }
+                ],
+                options: [
+                    { name: '--name-only', desc: 'ファイル名のみ表示' },
+                    { name: '--name-status', desc: 'ファイル名と変更タイプを表示' },
+                    { name: '--stat', desc: '統計情報を表示' },
+                    { name: '--pretty', desc: '表示形式を指定' }
+                ],
+                related: ['git log', 'git diff', 'git cat-file'],
+                hints: [{ type: 'usage', text: 'コミットハッシュでも参照可能' }]
+            },
+            {
+                command: 'git blame',
+                category: 'history',
+                frequency: 'medium',
+                description: 'ファイルの各行の最終変更者を表示',
+                tags: ['history', 'troubleshoot'],
+                examples: [
+                    { code: 'git blame file.txt', desc: 'ファイルの各行の変更者を表示' },
+                    { code: 'git blame -L 10,20 file.txt', desc: '10-20行目のみ表示' },
+                    { code: 'git blame -w file.txt', desc: '空白の変更を無視' },
+                    { code: 'git blame --since="1 month ago" file.txt', desc: '1ヶ月前以降の変更のみ' }
+                ],
+                options: [
+                    { name: '-L', desc: '行範囲を指定' },
+                    { name: '-w', desc: '空白の変更を無視' },
+                    { name: '-M', desc: 'ファイル内での移動を検出' },
+                    { name: '-C', desc: 'ファイル間での移動を検出' },
+                    { name: '--since', desc: '指定日以降の変更のみ' }
+                ],
+                related: ['git log', 'git show', 'git annotate'],
+                hints: [{ type: 'usage', text: 'バグの原因調査や責任者特定に使用' }]
+            },
+            {
+                command: 'git grep',
+                category: 'basic',
+                frequency: 'medium',
+                description: 'リポジトリ内でテキスト検索',
+                tags: ['search'],
+                examples: [
+                    { code: 'git grep "function"', desc: '"function"を含む行を検索' },
+                    { code: 'git grep -n "TODO"', desc: '行番号付きで検索' },
+                    { code: 'git grep --count "console.log"', desc: 'マッチ数をカウント' },
+                    { code: 'git grep "pattern" -- "*.js"', desc: 'JavaScriptファイルのみ検索' }
+                ],
+                options: [
+                    { name: '-n, --line-number', desc: '行番号を表示' },
+                    { name: '-i, --ignore-case', desc: '大文字小文字を無視' },
+                    { name: '--count', desc: 'マッチ数を表示' },
+                    { name: '-l, --files-with-matches', desc: 'ファイル名のみ表示' },
+                    { name: '-v, --invert-match', desc: 'マッチしない行を表示' }
+                ],
+                related: ['git log --grep', 'git show'],
+                hints: [{ type: 'usage', text: 'Gitが管理するファイルのみが検索対象' }]
+            },
+            // バージョン管理
+            {
+                command: 'git tag',
+                category: 'basic',
+                frequency: 'medium',
+                description: 'タグの作成・一覧・削除',
+                tags: [],
+                examples: [
+                    { code: 'git tag', desc: 'タグ一覧を表示' },
+                    { code: 'git tag v1.0.0', desc: '軽量タグを作成' },
+                    { code: 'git tag -a v1.0.0 -m "Version 1.0.0"', desc: '注釈付きタグを作成' },
+                    { code: 'git tag -d v1.0.0', desc: 'ローカルタグを削除' },
+                    { code: 'git push origin --tags', desc: 'すべてのタグをプッシュ' }
+                ],
+                options: [
+                    { name: '-a, --annotate', desc: '注釈付きタグを作成' },
+                    { name: '-m, --message', desc: 'タグメッセージ' },
+                    { name: '-d, --delete', desc: 'タグを削除' },
+                    { name: '-l, --list', desc: 'パターンでタグを絞り込み' },
+                    { name: '-f, --force', desc: '既存タグを上書き' }
+                ],
+                related: ['git push --tags', 'git checkout'],
+                hints: [{ type: 'usage', text: '注釈付きタグは署名やメッセージが可能で推奨' }]
+            },
+            // 高度な操作
+            {
+                command: 'git rebase',
+                category: 'advanced',
+                frequency: 'medium',
+                description: 'コミット履歴を書き換える',
+                tags: ['advanced', 'history'],
+                examples: [
+                    { code: 'git rebase main', desc: '現在のブランチをmainブランチの最新に移動' },
+                    { code: 'git rebase -i HEAD~3', desc: '過去3つのコミットを対話的に編集' },
+                    { code: 'git rebase --onto main feature~3 feature', desc: '特定の範囲のコミットを別のブランチに移動' },
+                    { code: 'git rebase --abort', desc: 'リベースを中止' }
+                ],
+                options: [
+                    { name: '-i, --interactive', desc: '対話的リベース' },
+                    { name: '--onto', desc: 'ベースブランチを指定' },
+                    { name: '--abort', desc: 'リベースを中止' },
+                    { name: '--continue', desc: 'コンフリクト解決後に続行' },
+                    { name: '--skip', desc: '現在のコミットをスキップ' }
+                ],
+                related: ['git merge', 'git cherry-pick', 'git reset'],
+                hints: [
+                    { type: 'usage', text: '公開済みコミットのリベースは避ける' },
+                    { type: 'danger', text: '履歴を書き換えるため、共有ブランチでは注意' }
+                ]
+            },
+            {
+                command: 'git cherry-pick',
+                category: 'advanced',
+                frequency: 'medium',
+                description: '特定のコミットを現在のブランチに適用',
+                tags: ['advanced'],
+                examples: [
+                    { code: 'git cherry-pick abc1234', desc: '特定のコミットを適用' },
+                    { code: 'git cherry-pick main~3..main~1', desc: '複数のコミットを適用' },
+                    { code: 'git cherry-pick --no-commit abc1234', desc: 'コミットせずに変更のみ適用' },
+                    { code: 'git cherry-pick --abort', desc: 'cherry-pickを中止' }
+                ],
+                options: [
+                    { name: '--no-commit', desc: 'コミットしない' },
+                    { name: '-x', desc: '元コミットの情報を追加' },
+                    { name: '--abort', desc: 'cherry-pickを中止' },
+                    { name: '--continue', desc: 'コンフリクト解決後に続行' }
+                ],
+                related: ['git rebase', 'git merge'],
+                hints: [{ type: 'usage', text: 'ホットフィックスの別ブランチへの適用などに使用' }]
+            },
+            {
+                command: 'git reflog',
+                category: 'advanced',
+                frequency: 'low',
+                description: 'HEADの移動履歴を表示',
+                tags: ['advanced', 'troubleshoot'],
+                examples: [
+                    { code: 'git reflog', desc: 'HEADの移動履歴を表示' },
+                    { code: 'git reflog show main', desc: '特定ブランチの履歴' },
+                    { code: 'git reset --hard HEAD@{2}', desc: 'reflogの情報を使って復元' }
+                ],
+                options: [
+                    { name: 'show', desc: '特定の参照の履歴を表示' },
+                    { name: '--date', desc: '日付形式を指定' },
+                    { name: '-n', desc: '表示件数を制限' }
+                ],
+                related: ['git reset', 'git log'],
+                hints: [{ type: 'usage', text: '誤ってresetした際の復旧に使用' }]
+            },
+            {
+                command: 'git bisect',
+                category: 'advanced',
+                frequency: 'low',
+                description: 'バイナリサーチでバグの原因となるコミットを特定',
+                tags: ['advanced', 'troubleshoot'],
+                examples: [
+                    { code: 'git bisect start', desc: 'bisectセッションを開始' },
+                    { code: 'git bisect bad', desc: '現在のコミットをbadとマーク' },
+                    { code: 'git bisect good v1.0', desc: '特定のコミットをgoodとマーク' },
+                    { code: 'git bisect reset', desc: 'bisectセッションを終了' },
+                    { code: 'git bisect run npm test', desc: 'テストコマンドを使って自動bisect' }
+                ],
+                options: [
+                    { name: 'start', desc: 'bisectを開始' },
+                    { name: 'bad', desc: 'badコミットをマーク' },
+                    { name: 'good', desc: 'goodコミットをマーク' },
+                    { name: 'reset', desc: 'bisectを終了' },
+                    { name: 'run', desc: '自動bisect実行' }
+                ],
+                related: ['git log', 'git blame'],
+                hints: [{ type: 'usage', text: 'バグが混入したコミットの特定に強力なツール' }]
+            },
+            {
+                command: 'git worktree',
+                category: 'advanced',
+                frequency: 'low',
+                description: '複数の作業ツリーを管理',
+                tags: ['advanced'],
+                examples: [
+                    { code: 'git worktree add ../project-feature feature-branch', desc: '新しい作業ツリーを追加' },
+                    { code: 'git worktree list', desc: '作業ツリー一覧を表示' },
+                    { code: 'git worktree remove ../project-feature', desc: '作業ツリーを削除' },
+                    { code: 'git worktree prune', desc: '不要な作業ツリー参照を削除' }
+                ],
+                options: [
+                    { name: 'add', desc: '作業ツリーを追加' },
+                    { name: 'list', desc: '一覧表示' },
+                    { name: 'remove', desc: '削除' },
+                    { name: 'prune', desc: '不要な参照を削除' }
+                ],
+                related: ['git checkout', 'git branch'],
+                hints: [{ type: 'usage', text: '複数のブランチで同時作業したい場合に便利' }]
+            },
+            {
+                command: 'git archive',
+                category: 'advanced',
+                frequency: 'low',
+                description: 'リポジトリの内容をアーカイブ',
+                tags: [],
+                examples: [
+                    { code: 'git archive --format=zip --output=project.zip HEAD', desc: '最新の状態をZIPファイルに' },
+                    { code: 'git archive --format=tar --output=project.tar v1.0', desc: 'v1.0タグの状態をTARファイルに' },
+                    { code: 'git archive --format=tar --prefix=project/ HEAD | gzip > project.tar.gz', desc: 'プレフィックス付きで圧縮' }
+                ],
+                options: [
+                    { name: '--format', desc: 'アーカイブ形式 (zip, tar)' },
+                    { name: '--output', desc: '出力ファイル名' },
+                    { name: '--prefix', desc: 'ディレクトリプレフィックス' },
+                    { name: '--remote', desc: 'リモートリポジトリから' }
+                ],
+                related: ['git tag', 'git checkout'],
+                hints: [{ type: 'usage', text: 'リリース用のソースコード配布に使用' }]
+            }
+        ];
+
+        // 状態管理
+        let filteredCommands = [...gitCommands];
+        let expandedCards = new Set();
+
+        // タブ切り替え
+        function switchTab(tabName) {
+            // すべてのタブボタンからactiveクラスを削除
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 選択されたタブをアクティブに
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // コマンドタブの場合はコマンドをレンダリング
+            if (tabName === 'commands') {
+                renderCommands();
+            }
+        }
+
+        // 初期化
+        function init() {
+            setupEventListeners();
+        }
+
+        // イベントリスナーのセットアップ
+        function setupEventListeners() {
+            const searchInput = document.getElementById('searchInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const frequencyFilter = document.getElementById('frequencyFilter');
+            
+            if (searchInput) searchInput.addEventListener('input', filterCommands);
+            if (categoryFilter) categoryFilter.addEventListener('change', filterCommands);
+            if (frequencyFilter) frequencyFilter.addEventListener('change', filterCommands);
+        }
+
+        // クイックフィルター
+        function setQuickFilter(filter) {
+            const quickFilters = document.querySelectorAll('.quick-filter');
+            quickFilters.forEach(f => f.classList.remove('active'));
+            event.target.classList.add('active');
+
+            switch(filter) {
+                case 'beginner':
+                    filteredCommands = gitCommands.filter(cmd => cmd.tags.includes('beginner'));
+                    break;
+                case 'troubleshoot':
+                    filteredCommands = gitCommands.filter(cmd => cmd.tags.includes('troubleshoot'));
+                    break;
+                case 'undo':
+                    filteredCommands = gitCommands.filter(cmd => cmd.tags.includes('undo'));
+                    break;
+                case 'collaboration':
+                    filteredCommands = gitCommands.filter(cmd => cmd.tags.includes('collaboration'));
+                    break;
+                default:
+                    filteredCommands = [...gitCommands];
+            }
+
+            renderCommands();
+        }
+
+        // フィルタリング
+        function filterCommands() {
+            const searchInput = document.getElementById('searchInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const frequencyFilter = document.getElementById('frequencyFilter');
+            
+            if (!searchInput) return;
+            
+            const searchTerm = searchInput.value.toLowerCase();
+            const category = categoryFilter ? categoryFilter.value : '';
+            const frequency = frequencyFilter ? frequencyFilter.value : '';
+
+            filteredCommands = gitCommands.filter(cmd => {
+                if (searchTerm && !cmd.command.toLowerCase().includes(searchTerm) &&
+                    !cmd.description.toLowerCase().includes(searchTerm) &&
+                    !cmd.category.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+                if (category && cmd.category !== category) {
+                    return false;
+                }
+                if (frequency && cmd.frequency !== frequency) {
+                    return false;
+                }
+                return true;
+            });
+
+            renderCommands();
+        }
+
+        // コマンドカードのレンダリング
+        function renderCommands() {
+            const grid = document.getElementById('commandGrid');
+            const notFound = document.getElementById('notFound');
+            
+            if (!grid) return;
+
+            if (filteredCommands.length === 0) {
+                grid.innerHTML = '';
+                if (notFound) notFound.style.display = 'block';
+                return;
+            }
+
+            if (notFound) notFound.style.display = 'none';
+            grid.innerHTML = filteredCommands.map((cmd, index) => `
+                <div class="command-card ${expandedCards.has(index) ? 'expanded' : ''}" onclick="toggleCard(${index})">
+                    <div class="command-header">
+                        <span class="command-name">${cmd.command}</span>
+                        <span class="command-category category-${cmd.category}">${getCategoryName(cmd.category)}</span>
+                    </div>
+                    <p class="command-description">${cmd.description}</p>
+                    <div class="command-meta">
+                        <div class="meta-item">
+                            <span class="importance">${'★'.repeat(getImportanceLevel(cmd.frequency))}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="usage-freq freq-${cmd.frequency}">${getFrequencyName(cmd.frequency)}</span>
+                        </div>
+                    </div>
+                    <div class="command-details">
+                        ${cmd.examples ? `
+                            <div class="example-container">
+                                <div class="example-title">使用例:</div>
+                                ${cmd.examples.map(ex => `
+                                    <div style="margin-bottom: 1rem;">
+                                        <pre><code>${escapeHtml(ex.code)}</code><button class="copy-btn" onclick="copyCode(event, this)">コピー</button></pre>
+                                        <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">${ex.desc}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${cmd.options && cmd.options.length > 0 ? `
+                            <div class="example-title">主なオプション:</div>
+                            <div class="options-grid">
+                                ${cmd.options.map(opt => `
+                                    <div class="option-item">
+                                        <span class="option-name">${opt.name}</span>
+                                        <span class="option-desc">${opt.desc}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${cmd.hints ? cmd.hints.map(hint => `
+                            <div class="${hint.type}-hint">${hint.text}</div>
+                        `).join('') : ''}
+                        
+                        ${cmd.related && cmd.related.length > 0 ? `
+                            <div class="related-commands">
+                                <div class="related-title">関連コマンド:</div>
+                                <div class="related-list">
+                                    ${cmd.related.map(rel => `
+                                        <span class="related-link" onclick="searchCommand(event, '${rel}')">${rel}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ヘルパー関数
+        function getCategoryName(category) {
+            const names = {
+                'basic': '基本操作',
+                'branch': 'ブランチ管理',
+                'remote': 'リモート操作',
+                'history': '履歴管理',
+                'advanced': '高度な操作',
+                'config': '設定'
+            };
+            return names[category] || category;
+        }
+
+        function getFrequencyName(frequency) {
+            const names = {
+                'high': 'よく使う',
+                'medium': '時々使う',
+                'low': 'たまに使う'
+            };
+            return names[frequency] || frequency;
+        }
+
+        function getImportanceLevel(frequency) {
+            const levels = {
+                'high': 3,
+                'medium': 2,
+                'low': 1
+            };
+            return levels[frequency] || 1;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // カード展開/折りたたみ
+        function toggleCard(index) {
+            if (expandedCards.has(index)) {
+                expandedCards.delete(index);
+            } else {
+                expandedCards.clear(); // 他のカードを閉じる
+                expandedCards.add(index);
+            }
+            renderCommands();
+        }
+
+        // コードコピー
+        function copyCode(event, button) {
+            event.stopPropagation();
+            const code = button.previousElementSibling.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = 'コピー済み';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'コピー';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // 関連コマンド検索
+        function searchCommand(event, command) {
+            event.stopPropagation();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = command;
+                filterCommands();
+            }
+        }
+
+        // 初期化実行
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
